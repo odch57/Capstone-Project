@@ -1,9 +1,12 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.databinding.DataBindingUtil;
+import android.support.design.widget.NavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayout;
 import android.util.Log;
+import android.view.MenuItem;
 
 import com.robsterthelobster.ucibustracker.data.models.*;
 import com.robsterthelobster.ucibustracker.databinding.ActivityMainBinding;
@@ -46,9 +49,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        binding.hello.setText("Hello World");
+        binding = DataBindingUtil.setContentView(this, R.layout.prediction_item);
+        //setSupportActionBar(binding.toolbar);
 
+        GridLayout.LayoutParams param =new GridLayout.LayoutParams();
+    }
+
+    private void initRetrofit(){
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
