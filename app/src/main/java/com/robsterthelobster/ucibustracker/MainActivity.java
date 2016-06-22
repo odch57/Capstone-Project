@@ -5,14 +5,19 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayout;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 
+import com.robsterthelobster.ucibustracker.data.NavListAdapter;
 import com.robsterthelobster.ucibustracker.data.models.*;
 import com.robsterthelobster.ucibustracker.databinding.ActivityMainBinding;
+import com.robsterthelobster.ucibustracker.databinding.ArrivalsMainBinding;
+
+import org.antlr.v4.Tool;
 
 import java.util.List;
 
@@ -53,10 +58,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        setSupportActionBar(binding.toolbar);
-
-//        View headerView = LayoutInflater.from(this).inflate(R.layout.nav_header, binding.navigationView, false);
-//        binding.navigationView.addHeaderView(headerView);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         initRetrofit();
     }
@@ -75,17 +78,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Route>> call, Response<List<Route>> response) {
                 List<Route> routes = response.body();
-                String[] routeNames = new String[routes.size()];
                 if(routes != null){
                     Log.d(TAG, "retrofit routeCall : success");
                     int count = 0;
                     for(Route route : routes){
                         Log.d(TAG, "route name: " + route.getName());
                         routeID = route.getId();
-                        routeNames[count] = route.getName();
                         count++;
                     }
-                    setAdapter(routeNames);
+                    setAdapter(routes);
 
                     callStops();
                 }
@@ -162,8 +163,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void setAdapter(String[] routeNames){
-        binding.drawerList.setAdapter(new ArrayAdapter<>(this,
-                R.layout.nav_route_item, routeNames));
+    private void setAdapter(List<Route> routes){
+        binding.drawerList.setAdapter(new NavListAdapter(this,
+                R.layout.nav_route_item, routes));
     }
 }
