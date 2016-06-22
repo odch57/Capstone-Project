@@ -16,19 +16,22 @@
 
 package com.robsterthelobster.ucibustracker;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.robsterthelobster.ucibustracker.data.PredictionAdapter;
+import com.robsterthelobster.ucibustracker.data.db.BusDbHelper;
 
 public class ArrivalsFragment extends Fragment {
 
-    private static final String TAG = "ArrivalsFragment";
+    private static final String TAG = ArrivalsFragment.class.getSimpleName();
     private static final int DATASET_COUNT = 60;
 
     protected RecyclerView mRecyclerView;
@@ -39,6 +42,24 @@ public class ArrivalsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        BusDbHelper mOpenHelper = new BusDbHelper(getContext());
+        Log.d(TAG, mOpenHelper.getDatabaseName());
+        Log.d(TAG, "test1 " + mOpenHelper.testDb());
+        Log.d(TAG, "test2 " + mOpenHelper.testDb2());
+        Log.d(TAG, "test3 " + mOpenHelper.testDb3());
+
+        Cursor cursor = mOpenHelper.testDb4();
+
+        try {
+            while (cursor.moveToNext()) {
+                Log.d(TAG, "id: " + cursor.getInt(0));
+                Log.d(TAG, "name: " + cursor.getString(1));
+                Log.d(TAG, "color: " + cursor.getString(2));
+            }
+        } finally {
+            cursor.close();
+        }
 
         initDataset();
     }
