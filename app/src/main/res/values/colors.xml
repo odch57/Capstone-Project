@@ -4,6 +4,7 @@
     <color name="colorPrimary">#0063A4</color>
     <color name="colorPrimaryDark">#1B3D6D</color>
     <color name="colorAccent">#FFD200</color>
+    <color name="betweenPoint">#0E5089</color>
 
     <color name="white">#FFFFFF</color>
 
