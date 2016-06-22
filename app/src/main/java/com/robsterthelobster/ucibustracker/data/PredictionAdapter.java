@@ -14,21 +14,24 @@
 * limitations under the License.
 */
 
-package com.robsterthelobster.ucibustracker;
+package com.robsterthelobster.ucibustracker.data;
 
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
+
+import com.robsterthelobster.ucibustracker.R;
 
 
 /**
  * Provide views to RecyclerView with data from mDataSet.
  */
-public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
-    private static final String TAG = "CustomAdapter";
+public class PredictionAdapter extends RecyclerView.Adapter<PredictionAdapter.ViewHolder> {
+    private static final String TAG = "PredictionAdapter";
 
     private String[] mDataSet;
 
@@ -37,7 +40,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView textView;
+        private final TextView routeView;
+        private final TextView timeView;
+        private final CheckBox buttonView;
+        private final TextView stopView;
 
         public ViewHolder(View v) {
             super(v);
@@ -45,52 +51,54 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
             v.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Log.d(TAG, "Element " + getPosition() + " clicked.");
+                    Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
                 }
             });
-            textView = (TextView) v.findViewById(R.id.textView);
+            routeView = (TextView) v.findViewById(R.id.prediction_route_name);
+            timeView = (TextView) v.findViewById(R.id.prediction_arrival_time);
+            buttonView = (CheckBox) v.findViewById(R.id.prediction_favorite_button);
+            stopView = (TextView) v.findViewById(R.id.prediction_stop_name);
         }
 
-        public TextView getTextView() {
-            return textView;
+        public TextView getRouteView() {
+            return routeView;
         }
+
+        public TextView getTimeView() {
+            return timeView;
+        }
+
+        public CheckBox getButtonView() {
+            return buttonView;
+        }
+
+        public TextView getStopView() {
+            return stopView;
+        }
+
     }
-    // END_INCLUDE(recyclerViewSampleViewHolder)
 
-    /**
-     * Initialize the dataset of the Adapter.
-     *
-     * @param dataSet String[] containing the data to populate views to be used by RecyclerView.
-     */
-    public CustomAdapter(String[] dataSet) {
+    public PredictionAdapter(String[] dataSet) {
         mDataSet = dataSet;
     }
 
-    // BEGIN_INCLUDE(recyclerViewOnCreateViewHolder)
-    // Create new views (invoked by the layout manager)
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-        // Create a new view.
         View v = LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.text_row_item, viewGroup, false);
+                .inflate(R.layout.prediction_item, viewGroup, false);
 
         return new ViewHolder(v);
     }
-    // END_INCLUDE(recyclerViewOnCreateViewHolder)
 
-    // BEGIN_INCLUDE(recyclerViewOnBindViewHolder)
-    // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         Log.d(TAG, "Element " + position + " set.");
 
-        // Get element from your dataset at this position and replace the contents of the view
-        // with that element
-        viewHolder.getTextView().setText(mDataSet[position]);
+        viewHolder.getRouteView().setText(mDataSet[position]);
+        viewHolder.getStopView().setText(mDataSet[position]);
+        viewHolder.getTimeView().setText(mDataSet[position]);
     }
-    // END_INCLUDE(recyclerViewOnBindViewHolder)
 
-    // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
         return mDataSet.length;

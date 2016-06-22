@@ -1,24 +1,20 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.databinding.DataBindingUtil;
-import android.support.design.widget.NavigationView;
+import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v7.widget.GridLayout;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ArrayAdapter;
 
 import com.robsterthelobster.ucibustracker.data.NavListAdapter;
-import com.robsterthelobster.ucibustracker.data.models.*;
+import com.robsterthelobster.ucibustracker.data.UciBusApiEndpointInterface;
+import com.robsterthelobster.ucibustracker.data.models.Arrivals;
+import com.robsterthelobster.ucibustracker.data.models.Prediction;
+import com.robsterthelobster.ucibustracker.data.models.Route;
+import com.robsterthelobster.ucibustracker.data.models.Stop;
+import com.robsterthelobster.ucibustracker.data.models.Vehicle;
 import com.robsterthelobster.ucibustracker.databinding.ActivityMainBinding;
-import com.robsterthelobster.ucibustracker.databinding.ArrivalsMainBinding;
-
-import org.antlr.v4.Tool;
 
 import java.util.List;
 
@@ -27,32 +23,16 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.GET;
-import retrofit2.http.Path;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String BASE_URL = "http://www.ucishuttles.com/";
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    UCIBusApiEndpointInterface apiService;
+    UciBusApiEndpointInterface apiService;
     ActivityMainBinding binding;
 
     int routeID, stopID;
-
-    public interface UCIBusApiEndpointInterface {
-        @GET("Region/0/Routes")
-        Call<List<Route>> getRoutes();
-
-        @GET("Route/{route}/Direction/0/Stops")
-        Call<List<Stop>> getStops(@Path("route") int route);
-
-        @GET("Route/{route}/Stop/{stop}/Arrivals")
-        Call<Arrivals> getArrivalTimes(@Path("route") int route, @Path("stop") int stop);
-
-        @GET("Route/{route}/Vehicles")
-        Call<List<Vehicle>> getVehicles(@Path("route") int route);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            RecyclerViewFragment fragment = new RecyclerViewFragment();
+            ArrivalsFragment fragment = new ArrivalsFragment();
             transaction.replace(R.id.main_container, fragment);
             transaction.commit();
         }
@@ -79,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         apiService =
-                retrofit.create(UCIBusApiEndpointInterface.class);
+                retrofit.create(UciBusApiEndpointInterface.class);
 
         Call<List<Route>> routeCall = apiService.getRoutes();
         routeCall.enqueue(new Callback<List<Route>>() {
@@ -88,11 +68,9 @@ public class MainActivity extends AppCompatActivity {
                 List<Route> routes = response.body();
                 if(routes != null){
                     Log.d(TAG, "retrofit routeCall : success");
-                    int count = 0;
                     for(Route route : routes){
                         Log.d(TAG, "route name: " + route.getName());
                         routeID = route.getId();
-                        count++;
                     }
                     setAdapter(routes);
 
