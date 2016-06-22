@@ -2,6 +2,7 @@ package com.robsterthelobster.ucibustracker;
 
 import android.databinding.DataBindingUtil;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayout;
@@ -62,6 +63,13 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         initRetrofit();
+
+        if (savedInstanceState == null) {
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            RecyclerViewFragment fragment = new RecyclerViewFragment();
+            transaction.replace(R.id.main_container, fragment);
+            transaction.commit();
+        }
     }
 
     private void initRetrofit(){
