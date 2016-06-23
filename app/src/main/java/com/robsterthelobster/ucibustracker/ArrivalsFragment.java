@@ -43,24 +43,6 @@ public class ArrivalsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        BusDbHelper mOpenHelper = new BusDbHelper(getContext());
-        Log.d(TAG, mOpenHelper.getDatabaseName());
-        Log.d(TAG, "test1 " + mOpenHelper.testDb());
-        Log.d(TAG, "test2 " + mOpenHelper.testDb2());
-        Log.d(TAG, "test3 " + mOpenHelper.testDb3());
-
-        Cursor cursor = mOpenHelper.testDb4();
-
-        try {
-            while (cursor.moveToNext()) {
-                Log.d(TAG, "id: " + cursor.getInt(0));
-                Log.d(TAG, "name: " + cursor.getString(1));
-                Log.d(TAG, "color: " + cursor.getString(2));
-            }
-        } finally {
-            cursor.close();
-        }
-
         initDataset();
     }
 

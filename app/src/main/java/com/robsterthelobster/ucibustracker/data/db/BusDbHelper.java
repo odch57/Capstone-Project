@@ -84,49 +84,4 @@ public class BusDbHelper extends SQLiteOpenHelper{
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
     }
-
-    final String TEST_QUERY = "SELECT * FROM " +
-            BusContract.RouteEntry.TABLE_NAME + ", " +
-            BusContract.StopEntry.TABLE_NAME + ", " +
-            BusContract.ArrivalEntry.TABLE_NAME + ", " +
-            BusContract.VehicleEntry.TABLE_NAME + "; ";
-
-    public int testDb(){
-
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(TEST_QUERY, null);
-        int answer = cursor.getCount();
-        db.close();
-
-        return answer;
-    }
-
-    public long testDb2(){
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(BusContract.RouteEntry.ROUTE_ID, "123");
-        values.put(BusContract.RouteEntry.ROUTE_NAME, "My Route Name");
-        values.put(BusContract.RouteEntry.COLOR, "BLUE");
-
-        long answer = db.insert(BusContract.RouteEntry.TABLE_NAME, null, values);
-        db.close();
-
-        return answer;
-    }
-
-    public int testDb3(){
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(TEST_QUERY, null);
-        int answer = cursor.getCount();
-        db.close();
-
-        return answer;
-    }
-
-    public Cursor testDb4(){
-
-        SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + BusContract.RouteEntry.TABLE_NAME, null);
-    }
 }
