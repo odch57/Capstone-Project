@@ -1,5 +1,11 @@
 package com.robsterthelobster.ucibustracker;
 
+import android.app.LoaderManager;
+import android.content.ContentValues;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.database.Cursor;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
@@ -14,6 +20,7 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 
 import com.robsterthelobster.ucibustracker.data.UciBusApiEndpointInterface;
+import com.robsterthelobster.ucibustracker.data.db.BusContract;
 import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 import com.robsterthelobster.ucibustracker.data.models.Prediction;
 import com.robsterthelobster.ucibustracker.data.models.Route;
@@ -21,6 +28,7 @@ import com.robsterthelobster.ucibustracker.data.models.Stop;
 import com.robsterthelobster.ucibustracker.data.models.Vehicle;
 
 import java.util.List;
+import java.util.Vector;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -29,10 +37,21 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ArrivalsActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String BASE_URL = "http://www.ucishuttles.com/";
     private static final String TAG = ArrivalsActivity.class.getSimpleName();
+
+    private static final int ROUTE_LOADER = 0;
+    private static final String[] ROUTE_COLUMNS = {
+            BusContract.RouteEntry.ROUTE_ID,
+            BusContract.RouteEntry.ROUTE_NAME,
+            BusContract.RouteEntry.COLOR
+    };
+    private static final int C_ROUTE_ID = 0;
+    private static final int C_ROUTE_NAME = 1;
+    private static final int C_COLOR = 2;
 
     UciBusApiEndpointInterface apiService;
     NavigationView navigationView;
@@ -43,6 +62,9 @@ public class ArrivalsActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_arrivals);
+
+        getLoaderManager().initLoader(ROUTE_LOADER, null, this);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -123,11 +145,22 @@ public class ArrivalsActivity extends AppCompatActivity
                 List<Route> routes = response.body();
                 if(routes != null){
                     Log.d(TAG, "retrofit routeCall : success");
+                    Vector<ContentValues> cVVector = new Vector<ContentValues>(routes.size());
                     for(Route route : routes){
                         Log.d(TAG, "route name: " + route.getName());
-                        routeID = route.getId();
+                        ContentValues routeValues = new ContentValues();
+
+                        routeValues.put(BusContract.RouteEntry.ROUTE_ID, route.getId());
+                        routeValues.put(BusContract.RouteEntry.ROUTE_NAME, route.getName());
+                        routeValues.put(BusContract.RouteEntry.COLOR, route.getColor());
+
+                        cVVector.add(routeValues);
                     }
-                    setAdapter(routes);
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.RouteEntry.CONTENT_URI, cvArray);
+                    }
 
                     callStops();
                 }
@@ -204,13 +237,41 @@ public class ArrivalsActivity extends AppCompatActivity
         });
     }
 
-    private void setAdapter(List<Route> routes){
-        Menu m = navigationView.getMenu();
-        SubMenu routesMenu = m.addSubMenu("Routes");
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
-        for(Route route : routes){
-            MenuItem item = routesMenu.add(route.getName());
-            item.setIcon(R.drawable.ic_directions_bus_24dp);
+        switch(id){
+            case ROUTE_LOADER:
+                return new CursorLoader(this,
+                        BusContract.RouteEntry.CONTENT_URI,
+                        ROUTE_COLUMNS,
+                        null, null, null);
+            default:
+                Log.d(TAG, "Not valid id: " + id);
+                return null;
         }
     }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        int id = loader.getId();
+
+        switch(id){
+            case ROUTE_LOADER:
+                Menu m = navigationView.getMenu();
+                SubMenu routesMenu = m.addSubMenu("Routes");
+                while(data.moveToNext()){
+                    MenuItem item = routesMenu.add(data.getString(C_ROUTE_NAME));
+                    item.setIcon(R.drawable.ic_directions_bus_24dp);
+                }
+                getLoaderManager().destroyLoader(ROUTE_LOADER);
+                break;
+            default:
+                Log.d(TAG, "No such id: " + id);
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {}
 }

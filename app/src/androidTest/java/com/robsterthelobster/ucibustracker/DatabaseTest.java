@@ -41,7 +41,6 @@ public class DatabaseTest extends AndroidTestCase {
         SQLiteDatabase db = helper.getReadableDatabase();
         Cursor cursor = db.rawQuery(TEST_QUERY, null);
         int answer = cursor.getCount();
-        db.close();
 
         assertEquals(answer, 0);
     }
@@ -55,8 +54,6 @@ public class DatabaseTest extends AndroidTestCase {
         values.put(BusContract.RouteEntry.COLOR, "BLUE");
 
         long answer = db.insert(BusContract.RouteEntry.TABLE_NAME, null, values);
-
-        db.close();
 
         assertFalse(answer == -1);
     }
@@ -72,7 +69,6 @@ public class DatabaseTest extends AndroidTestCase {
             assertEquals(c.getString(2), "BLUE");
         }
 
-        db.close();
     }
 
 }

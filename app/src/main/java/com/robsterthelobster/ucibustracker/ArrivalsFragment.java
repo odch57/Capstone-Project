@@ -16,9 +16,13 @@
 
 package com.robsterthelobster.ucibustracker;
 
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -27,6 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.robsterthelobster.ucibustracker.data.PredictionAdapter;
+import com.robsterthelobster.ucibustracker.data.db.BusContract;
 import com.robsterthelobster.ucibustracker.data.db.BusDbHelper;
 
 public class ArrivalsFragment extends Fragment {
@@ -44,6 +49,11 @@ public class ArrivalsFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         initDataset();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override

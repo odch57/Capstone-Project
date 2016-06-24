@@ -17,6 +17,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -42,6 +43,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".data.db.BusContentProvider"
+            android:authorities="com.robsterthelobster.ucibustracker"
+            android:enabled="true"
+            android:exported="false"></provider>
     </application>
 
 </manifest>
