@@ -3,6 +3,7 @@ package com.robsterthelobster.ucibustracker;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import com.robsterthelobster.ucibustracker.data.models.Route;
 import com.robsterthelobster.ucibustracker.data.models.Stop;
 import com.robsterthelobster.ucibustracker.data.models.Vehicle;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -54,6 +56,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
     UciBusApiEndpointInterface apiService;
     NavigationView navigationView;
+    DrawerLayout drawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,14 +66,13 @@ public class ArrivalsActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
 
         initRetrofit();
 
@@ -119,7 +121,6 @@ public class ArrivalsActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         //int id = item.getItemId();
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -180,6 +181,10 @@ public class ArrivalsActivity extends AppCompatActivity
         stopCall.enqueue(new Callback<List<Stop>>() {
             @Override
             public void onResponse(Call<List<Stop>> call, Response<List<Stop>> response) {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
+                getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,
+                        null, null);
                 List<Stop> stops = response.body();
                 if(stops != null){
                     Vector<ContentValues> cVVector = new Vector<ContentValues>(stops.size());
@@ -188,16 +193,15 @@ public class ArrivalsActivity extends AppCompatActivity
                         ContentValues stopValues = new ContentValues();
 
                         int stopID = stop.getId();
-                        String stopName = stop.getName();
 
                         stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
-                        stopValues.put(BusContract.StopEntry.STOP_NAME, stopName);
+                        stopValues.put(BusContract.StopEntry.STOP_NAME, stop.getName());
                         stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
                         stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
 
                         cVVector.add(stopValues);
 
-                        callArrivals(routeID, stopID, stopName);
+                        callArrivals(routeID, stopID);
                     }
                     if ( cVVector.size() > 0 ) {
                         ContentValues[] cvArray = new ContentValues[cVVector.size()];
@@ -214,16 +218,11 @@ public class ArrivalsActivity extends AppCompatActivity
         });
     }
 
-    private void callArrivals(final int routeID, int stopID, final String stopName){
+    private void callArrivals(final int routeID, int stopID){
         Call<Arrivals> arrivalsCall = apiService.getArrivalTimes(routeID, stopID);
         arrivalsCall.enqueue(new Callback<Arrivals>() {
             @Override
             public void onResponse(Call<Arrivals> call, Response<Arrivals> response) {
-
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
-                getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,
-                        null, null);
 
                 Arrivals arrivals = response.body();
 
@@ -239,7 +238,6 @@ public class ArrivalsActivity extends AppCompatActivity
                         arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
                         arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
                         arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
-                        arrivalValues.put(BusContract.ArrivalEntry.STOP_NAME, stopName);
                         arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
                         arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
                         arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
@@ -309,6 +307,7 @@ public class ArrivalsActivity extends AppCompatActivity
                 while(data.moveToNext()){
                     MenuItem item = routesMenu.add(data.getString(C_ROUTE_NAME));
                     item.setIcon(R.drawable.ic_directions_bus_24dp);
+                    item.setIntent(new Intent(this, RouteActivity.class));
                 }
                 getLoaderManager().destroyLoader(ROUTE_LOADER);
                 break;

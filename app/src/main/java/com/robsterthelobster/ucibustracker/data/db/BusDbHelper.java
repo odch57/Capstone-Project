@@ -37,7 +37,6 @@ public class BusDbHelper extends SQLiteOpenHelper{
                     BusContract.ArrivalEntry.ROUTE_ID + " INTEGER NOT NULL, " +
                     BusContract.ArrivalEntry.ROUTE_NAME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.STOP_ID + " INTEGER NOT NULL, " +
-                    BusContract.ArrivalEntry.STOP_NAME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.PREDICTION_TIME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.MINUTES + " INTEGER NOT NULL, " +
                     BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " REAL NOT NULL, " +

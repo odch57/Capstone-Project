@@ -16,8 +16,13 @@
 
 package com.robsterthelobster.ucibustracker;
 
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -29,45 +34,79 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.robsterthelobster.ucibustracker.data.PredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
-public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
 
     private static final String TAG = ArrivalsFragment.class.getSimpleName();
-    private static final int DATASET_COUNT = 60;
+    private final int REQUEST_LOCATION = 0;
 
     private static final int ARRIVAL_LOADER = 0;
     private static final String[] ARRIVAL_COLUMNS = {
             BusContract.ArrivalEntry._ID,
-            BusContract.ArrivalEntry.ROUTE_ID,
-            BusContract.ArrivalEntry.ROUTE_NAME,
-            BusContract.ArrivalEntry.STOP_ID,
-            BusContract.ArrivalEntry.STOP_NAME,
+            BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_ID,
+            BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_NAME,
+            BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.STOP_ID,
             BusContract.ArrivalEntry.PREDICTION_TIME,
             BusContract.ArrivalEntry.MINUTES,
-            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL
+            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
+            BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR,
+            BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME
     };
     public static final int C_ROUTE_ID = 1;
     public static final int C_ROUTE_NAME = 2;
     public static final int C_STOP_ID = 3;
-    public static final int C_STOP_NAME = 4;
-    public static final int C_PREDICTION_TIME = 5;
-    public static final int C_MINUTES = 6;
-    public static final int C_SECONDS = 7;
+    public static final int C_PREDICTION_TIME = 4;
+    public static final int C_MINUTES = 5;
+    public static final int C_SECONDS = 6;
+    public static final int C_COLOR = 7;
+    public static final int C_STOP_NAME = 8;
 
     protected RecyclerView mRecyclerView;
     protected PredictionAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
 
+    private GoogleApiClient mGoogleApiClient;
+    protected LocationRequest mLocationRequest;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mGoogleApiClient = new GoogleApiClient.Builder(getContext())
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState){
+    public void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onStop() {
+        if(mGoogleApiClient != null && mGoogleApiClient.isConnected()){
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
+    }
+
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
@@ -96,13 +135,14 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public Loader onCreateLoader(int id, Bundle bundle) {
-        switch(id){
+        switch (id) {
             case ARRIVAL_LOADER:
                 return new CursorLoader(getContext(),
                         BusContract.ArrivalEntry.CONTENT_URI,
                         ARRIVAL_COLUMNS,
                         BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                        new String[]{"0"}, null);
+                        new String[]{"1"},
+                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC");
             default:
                 Log.d(TAG, "Not valid id: " + id);
                 return null;
@@ -117,5 +157,44 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoaderReset(Loader loader) {
 
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected");
+
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(1000);
+
+        if (ActivityCompat.checkSelfPermission(getContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(),
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION);
+        }else {
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(TAG, "onConnectionSuspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed");
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG, location.toString());
     }
 }

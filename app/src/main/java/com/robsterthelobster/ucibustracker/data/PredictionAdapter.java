@@ -104,9 +104,12 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
-        String arrivalTime = minutes + " minutes";
+        String arrivalTime = minutes + " min";
+        String color = cursor.getString(ArrivalsFragment.C_COLOR);
 
-        viewHolder.setBackground("#F0649E");
+        viewHolder.getButtonView().setOnCheckedChangeListener(null);
+
+        viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
         viewHolder.getTimeView().setText(arrivalTime);
         viewHolder.getStopView().setText(stopName);

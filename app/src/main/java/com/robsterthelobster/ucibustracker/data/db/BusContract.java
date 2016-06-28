@@ -71,7 +71,6 @@ public class BusContract {
         public static final String ROUTE_ID = "route_id";
         public static final String ROUTE_NAME = "route_name";
         public static final String STOP_ID = "stop_id";
-        public static final String STOP_NAME = "stop_name";
         public static final String PREDICTION_TIME = "prediction_time";
         public static final String MINUTES = "minutes";
         public static final String SECONDS_TO_ARRIVAL = "seconds_to_arrival";
@@ -80,6 +79,8 @@ public class BusContract {
         public static Uri buildArrivalUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+
     }
 
     public static final class VehicleEntry implements BaseColumns{

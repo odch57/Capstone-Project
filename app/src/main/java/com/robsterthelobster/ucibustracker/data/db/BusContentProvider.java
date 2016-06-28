@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 import com.robsterthelobster.ucibustracker.data.models.Route;
@@ -20,6 +21,32 @@ public class BusContentProvider extends ContentProvider {
     private static final int ARRIVALS_ROUTE_STOP = 301;
     private static final int VEHICLES = 400;
     private static final int VEHICLES_ROUTE = 401;
+
+    private static final SQLiteQueryBuilder arrivalsRouteStopBuilder;
+
+    static {
+        arrivalsRouteStopBuilder = new SQLiteQueryBuilder();
+
+        // Arrivals
+        // INNER JOIN Routes ON Arrivals.route_id = Routes.route_id
+        // INNER JOIN Stops ON Arrivals.stop_id = Stops.stop_id
+        //
+        // JOIN to get color and stop name
+        arrivalsRouteStopBuilder.setTables(
+                BusContract.ArrivalEntry.TABLE_NAME +
+                        " INNER JOIN " +
+                        BusContract.RouteEntry.TABLE_NAME +
+                        " ON " + BusContract.ArrivalEntry.TABLE_NAME +
+                        "." + BusContract.ArrivalEntry.ROUTE_ID +
+                        " = " + BusContract.RouteEntry.TABLE_NAME +
+                        "." + BusContract.RouteEntry.ROUTE_ID +
+                        " INNER JOIN " +
+                        BusContract.StopEntry.TABLE_NAME +
+                        " ON " + BusContract.ArrivalEntry.TABLE_NAME +
+                        "." + BusContract.ArrivalEntry.STOP_ID +
+                        " = " + BusContract.StopEntry.TABLE_NAME +
+                        "." + BusContract.StopEntry.STOP_ID);
+    }
 
     static UriMatcher buildUriMatcher() {
 
@@ -108,14 +135,14 @@ public class BusContentProvider extends ContentProvider {
 
         switch(match){
             case ROUTES:
-                _id = db.replace(BusContract.RouteEntry.TABLE_NAME, null, values);
+                _id = db.insertWithOnConflict(BusContract.RouteEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 if ( _id > 0 )
                     returnUri = BusContract.RouteEntry.buildRouteUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             case STOPS:
-                _id = db.replace(BusContract.StopEntry.TABLE_NAME, null, values);
+                _id = db.insertWithOnConflict(BusContract.StopEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 if ( _id > 0 )
                     returnUri = BusContract.StopEntry.buildStopUri(_id);
                 else
@@ -146,39 +173,45 @@ public class BusContentProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
 
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
         int match = sUriMatcher.match(uri);
         Cursor retCurosr;
 
         switch(match) {
             case ROUTES:
-                retCurosr = mDbHelper.getReadableDatabase().query(
+                retCurosr = db.query(
                         BusContract.RouteEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
             case STOPS:
-                retCurosr = mDbHelper.getReadableDatabase().query(
+                retCurosr = db.query(
                         BusContract.StopEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
             case ARRIVALS:
-                retCurosr = mDbHelper.getReadableDatabase().query(
-                        BusContract.ArrivalEntry.TABLE_NAME, projection,
-                        selection, selectionArgs, null, null, sortOrder);
+                retCurosr = arrivalsRouteStopBuilder.query(db,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
                 break;
             case ARRIVALS_ROUTE_STOP:
                 //TODO
-                retCurosr = mDbHelper.getReadableDatabase().query(
+                retCurosr = db.query(
                         BusContract.ArrivalEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
             case VEHICLES:
-                retCurosr = mDbHelper.getReadableDatabase().query(
+                retCurosr = db.query(
                         BusContract.VehicleEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
             case VEHICLES_ROUTE:
                 //TODO
-                retCurosr = mDbHelper.getReadableDatabase().query(
+                retCurosr = db.query(
                         BusContract.VehicleEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
@@ -256,7 +289,7 @@ public class BusContentProvider extends ContentProvider {
         db.beginTransaction();
         try {
             for (ContentValues value : values) {
-                long _id = db.replace(tableName, null, value);
+                long _id = db.insertWithOnConflict(tableName, null, value, SQLiteDatabase.CONFLICT_REPLACE);
                 if (_id != -1) {
                     returnCount++;
                 }
