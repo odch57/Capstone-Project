@@ -115,7 +115,7 @@ public class BusContentProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             case STOPS:
-                _id = db.insert(BusContract.StopEntry.TABLE_NAME, null, values);
+                _id = db.replace(BusContract.StopEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
                     returnUri = BusContract.StopEntry.buildStopUri(_id);
                 else

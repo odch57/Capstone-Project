@@ -16,6 +16,9 @@
 
 package com.robsterthelobster.ucibustracker.data;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,26 +27,26 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+import com.robsterthelobster.ucibustracker.ArrivalsFragment;
 import com.robsterthelobster.ucibustracker.R;
+import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 
-
-/**
- * Provide views to RecyclerView with data from mDataSet.
- */
-public class PredictionAdapter extends RecyclerView.Adapter<PredictionAdapter.ViewHolder> {
+public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapter.ViewHolder> {
     private static final String TAG = "PredictionAdapter";
 
-    private String[] mDataSet;
+    private static Context mContext;
 
-    // BEGIN_INCLUDE(recyclerViewSampleViewHolder)
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+    public PredictionAdapter(Context context, Cursor cursor) {
+        super(context, cursor);
+        mContext = context;
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView routeView;
         private final TextView timeView;
         private final CheckBox buttonView;
         private final TextView stopView;
+        private final View view;
 
         public ViewHolder(View v) {
             super(v);
@@ -58,6 +61,11 @@ public class PredictionAdapter extends RecyclerView.Adapter<PredictionAdapter.Vi
             timeView = (TextView) v.findViewById(R.id.prediction_arrival_time);
             buttonView = (CheckBox) v.findViewById(R.id.prediction_favorite_button);
             stopView = (TextView) v.findViewById(R.id.prediction_stop_name);
+            view = v;
+        }
+
+        public void setBackground(String color){
+            view.setBackgroundColor(Color.parseColor(color));
         }
 
         public TextView getRouteView() {
@@ -78,10 +86,6 @@ public class PredictionAdapter extends RecyclerView.Adapter<PredictionAdapter.Vi
 
     }
 
-    public PredictionAdapter(String[] dataSet) {
-        mDataSet = dataSet;
-    }
-
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         View v = LayoutInflater.from(viewGroup.getContext())
@@ -91,16 +95,20 @@ public class PredictionAdapter extends RecyclerView.Adapter<PredictionAdapter.Vi
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        Log.d(TAG, "Element " + position + " set.");
-
-        viewHolder.getRouteView().setText(mDataSet[position]);
-        viewHolder.getStopView().setText(mDataSet[position]);
-        viewHolder.getTimeView().setText(mDataSet[position]);
+    public int getItemCount() {
+        return super.getItemCount();
     }
 
     @Override
-    public int getItemCount() {
-        return mDataSet.length;
+    public void onBindViewHolder(ViewHolder viewHolder, Cursor cursor) {
+        String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
+        String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
+        int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
+        String arrivalTime = minutes + " minutes";
+
+        viewHolder.setBackground("#F0649E");
+        viewHolder.getRouteView().setText(routeName);
+        viewHolder.getTimeView().setText(arrivalTime);
+        viewHolder.getStopView().setText(stopName);
     }
 }

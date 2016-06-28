@@ -16,28 +16,40 @@ public class BusDbHelper extends SQLiteOpenHelper{
 
     final String SQL_CREATE_ROUTE_TABLE =
             "CREATE TABLE " + BusContract.RouteEntry.TABLE_NAME + " (" +
-                    BusContract.RouteEntry.ROUTE_ID + " INTEGER UNIQUE NOT NULL, " +
+                    BusContract.RouteEntry.ROUTE_ID + " INTEGER PRIMARY KEY, " +
                     BusContract.RouteEntry.ROUTE_NAME + " TEXT NOT NULL, " +
-                    BusContract.RouteEntry.COLOR + " TEXT NOT NULL " +
+                    BusContract.RouteEntry.COLOR + " TEXT NOT NULL, " +
+                    " UNIQUE (" + BusContract.RouteEntry.ROUTE_ID + ") ON CONFLICT REPLACE" +
                     " );";
 
     final String SQL_CREATE_STOP_TABLE =
             "CREATE TABLE " + BusContract.StopEntry.TABLE_NAME + " (" +
-                    BusContract.StopEntry.STOP_ID + " INTEGER UNIQUE NOT NULL, " +
+                    BusContract.StopEntry.STOP_ID + " INTEGER PRIMARY KEY, " +
                     BusContract.StopEntry.STOP_NAME + " TEXT NOT NULL, " +
                     BusContract.StopEntry.LATITUDE + " REAL NOT NULL, " +
-                    BusContract.StopEntry.LONGITUDE + " REAL NOT NULL " +
+                    BusContract.StopEntry.LONGITUDE + " REAL NOT NULL, " +
+                    " UNIQUE (" + BusContract.StopEntry.STOP_ID + ") ON CONFLICT REPLACE" +
                     " );";
 
     final String SQL_CREATE_ARRIVAL_TABLE =
             "CREATE TABLE " + BusContract.ArrivalEntry.TABLE_NAME + " (" +
+                    BusContract.ArrivalEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     BusContract.ArrivalEntry.ROUTE_ID + " INTEGER NOT NULL, " +
                     BusContract.ArrivalEntry.ROUTE_NAME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.STOP_ID + " INTEGER NOT NULL, " +
+                    BusContract.ArrivalEntry.STOP_NAME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.PREDICTION_TIME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.MINUTES + " INTEGER NOT NULL, " +
                     BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " REAL NOT NULL, " +
-                    BusContract.ArrivalEntry.IS_CURRENT + " INTEGER NOT NULL" +
+                    BusContract.ArrivalEntry.IS_CURRENT + " INTEGER NOT NULL, " +
+
+                    " FOREIGN KEY (" + BusContract.ArrivalEntry.ROUTE_ID  + ") REFERENCES " +
+                    BusContract.RouteEntry.TABLE_NAME + " (" + BusContract.RouteEntry.ROUTE_ID
+                    + "), " +
+
+                    " FOREIGN KEY (" + BusContract.ArrivalEntry.STOP_ID  + ") REFERENCES " +
+                    BusContract.StopEntry.TABLE_NAME + " (" + BusContract.StopEntry.STOP_ID
+                    + ") " +
                     " );";
 
     final String SQL_CREATE_VEHICLE_TABLE =

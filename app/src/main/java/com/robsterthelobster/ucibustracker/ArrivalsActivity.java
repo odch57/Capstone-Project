@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
@@ -56,14 +55,10 @@ public class ArrivalsActivity extends AppCompatActivity
     UciBusApiEndpointInterface apiService;
     NavigationView navigationView;
 
-    int routeID, stopID;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_arrivals);
-
-        getLoaderManager().initLoader(ROUTE_LOADER, null, this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -150,19 +145,22 @@ public class ArrivalsActivity extends AppCompatActivity
                         Log.d(TAG, "route name: " + route.getName());
                         ContentValues routeValues = new ContentValues();
 
-                        routeValues.put(BusContract.RouteEntry.ROUTE_ID, route.getId());
+                        int routeID = route.getId();
+
+                        routeValues.put(BusContract.RouteEntry.ROUTE_ID, routeID);
                         routeValues.put(BusContract.RouteEntry.ROUTE_NAME, route.getName());
                         routeValues.put(BusContract.RouteEntry.COLOR, route.getColor());
 
                         cVVector.add(routeValues);
+
+                        callStops(routeID);
                     }
                     if ( cVVector.size() > 0 ) {
                         ContentValues[] cvArray = new ContentValues[cVVector.size()];
                         cVVector.toArray(cvArray);
                         getContentResolver().bulkInsert(BusContract.RouteEntry.CONTENT_URI, cvArray);
                     }
-
-                    callStops();
+                    startLoader();
                 }
             }
 
@@ -173,18 +171,39 @@ public class ArrivalsActivity extends AppCompatActivity
         });
     }
 
-    private void callStops(){
+    private void startLoader() {
+        getLoaderManager().initLoader(ROUTE_LOADER, null, this);
+    }
+
+    private void callStops(final int routeID){
         Call<List<Stop>> stopCall = apiService.getStops(routeID);
         stopCall.enqueue(new Callback<List<Stop>>() {
             @Override
             public void onResponse(Call<List<Stop>> call, Response<List<Stop>> response) {
                 List<Stop> stops = response.body();
                 if(stops != null){
+                    Vector<ContentValues> cVVector = new Vector<ContentValues>(stops.size());
                     for(Stop stop : stops){
                         Log.d(TAG, "Stop : " + stop.getName());
-                        stopID = stop.getId();
+                        ContentValues stopValues = new ContentValues();
+
+                        int stopID = stop.getId();
+                        String stopName = stop.getName();
+
+                        stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
+                        stopValues.put(BusContract.StopEntry.STOP_NAME, stopName);
+                        stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
+                        stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
+
+                        cVVector.add(stopValues);
+
+                        callArrivals(routeID, stopID, stopName);
                     }
-                    callArrivals();
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.StopEntry.CONTENT_URI, cvArray);
+                    }
                 }
             }
 
@@ -195,18 +214,45 @@ public class ArrivalsActivity extends AppCompatActivity
         });
     }
 
-    private void callArrivals(){
+    private void callArrivals(final int routeID, int stopID, final String stopName){
         Call<Arrivals> arrivalsCall = apiService.getArrivalTimes(routeID, stopID);
         arrivalsCall.enqueue(new Callback<Arrivals>() {
             @Override
             public void onResponse(Call<Arrivals> call, Response<Arrivals> response) {
+
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
+                getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,
+                        null, null);
+
                 Arrivals arrivals = response.body();
+
                 if(arrivals != null){
                     List<Prediction> predictions = arrivals.getPredictions();
+                    String predictionTime = arrivals.getPredictionTime();
+
+                    Vector<ContentValues> cVVector = new Vector<ContentValues>(predictions.size());
                     for(Prediction prediction : predictions){
-                        Log.d(TAG, "prediction: " + prediction.getArriveTime());
+                        Log.d(TAG, "Prediction : " + prediction.getArriveTime());
+                        ContentValues arrivalValues = new ContentValues();
+
+                        arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
+                        arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
+                        arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
+                        arrivalValues.put(BusContract.ArrivalEntry.STOP_NAME, stopName);
+                        arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
+                        arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
+                        arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
+                        arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
+
+                        cVVector.add(arrivalValues);
                     }
-                    callVehicles();
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.ArrivalEntry.CONTENT_URI, cvArray);
+                    }
+                    callVehicles(routeID);
                 }
             }
 
@@ -217,7 +263,7 @@ public class ArrivalsActivity extends AppCompatActivity
         });
     }
 
-    private void callVehicles(){
+    private void callVehicles(int routeID){
         Call<List<Vehicle>> vehiclesCall = apiService.getVehicles(routeID);
         vehiclesCall.enqueue(new Callback<List<Vehicle>>() {
             @Override
