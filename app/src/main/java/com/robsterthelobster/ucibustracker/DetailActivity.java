@@ -24,17 +24,18 @@ public class DetailActivity extends AppCompatActivity {
     private MyAdapter mAdapter;
     private ViewPager mPager;
     private Toolbar toolbar;
-    static int routeID;
+    static String routeName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        routeID = getIntent().getExtras().getInt(Constants.INTENT_KEY);
+        routeName = getIntent().getExtras().getString(Constants.INTENT_KEY);
 
         toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setTitle(routeName);
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,7 +79,7 @@ public class DetailActivity extends AppCompatActivity {
             switch (position) {
                 case 0:
                     Bundle bundle = new Bundle();
-                    bundle.putInt(Constants.BUNDLE_KEY, routeID);
+                    bundle.putString(Constants.BUNDLE_KEY, routeName);
 
                     ArrivalsFragment fragment = new ArrivalsFragment();
                     fragment.setArguments(bundle);

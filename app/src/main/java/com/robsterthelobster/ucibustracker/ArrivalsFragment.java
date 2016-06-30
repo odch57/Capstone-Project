@@ -33,6 +33,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -74,11 +75,12 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     protected RecyclerView mRecyclerView;
     protected PredictionAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
+    protected TextView emptyView;
 
     private GoogleApiClient mGoogleApiClient;
     protected LocationRequest mLocationRequest;
 
-    private String routeID;
+    private String routeName;
     private boolean hasRouteID = false;
 
     @Override
@@ -87,7 +89,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
         Bundle arguments = getArguments();
         if (arguments != null) {
-            routeID = arguments.getInt(Constants.BUNDLE_KEY) + "";
+            routeName = arguments.getString(Constants.BUNDLE_KEY);
             hasRouteID = true;
         }
 
@@ -127,6 +129,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         rootView.setTag(TAG);
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView);
+        emptyView = (TextView) rootView.findViewById(R.id.empty_view);
 
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -153,8 +156,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                             ARRIVAL_COLUMNS,
                             BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
                                     " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
-                                    BusContract.ArrivalEntry.ROUTE_ID + " = ?",
-                            new String[]{"0", routeID},
+                                    BusContract.ArrivalEntry.ROUTE_NAME + " = ?",
+                            new String[]{"0", routeName},
                             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
                 }else {
                     return new CursorLoader(getContext(),
@@ -172,6 +175,11 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        if(cursor.getCount() == 0){
+            mRecyclerView.setVisibility(View.INVISIBLE);
+            emptyView.setVisibility(View.VISIBLE);
+
+        }
         mAdapter.swapCursor(cursor);
     }
 

@@ -34,8 +34,11 @@ import android.widget.TextView;
 import com.robsterthelobster.ucibustracker.ArrivalsFragment;
 import com.robsterthelobster.ucibustracker.R;
 import com.robsterthelobster.ucibustracker.Utility;
-import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 
+/**
+ * Created by robin
+ * https://gist.github.com/ZkHaider/9bf0e1d7b8a2736fd676
+ */
 public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapter.ViewHolder> {
     private static final String TAG = "PredictionAdapter";
 
@@ -46,7 +49,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         mContext = context;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         private int originalHeight = 0;
         private boolean isViewExpanded = false;
@@ -55,67 +58,80 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         private final TextView timeView;
         private final CheckBox buttonView;
         private final TextView stopView;
+        private final TextView timeViewAlt;
         private final View view;
 
         public ViewHolder(View v) {
             super(v);
-            // Define click listener for the ViewHolder's View.
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
 
-                    if (originalHeight <= 0) {
-                        originalHeight = view.getHeight();
-                    }
-
-                    // Declare a ValueAnimator object
-                    ValueAnimator valueAnimator;
-                    if (!isViewExpanded) {
-                        isViewExpanded = true;
-                        valueAnimator = ValueAnimator.ofInt(originalHeight, originalHeight + (int) (originalHeight * 2.0)); // These values in this method can be changed to expand however much you like
-                    } else {
-                        isViewExpanded = false;
-                        valueAnimator = ValueAnimator.ofInt(originalHeight + (int) (originalHeight * 2.0), originalHeight);
-
-                        Animation a = new AlphaAnimation(1.00f, 0.00f); // Fade out
-
-                        a.setDuration(200);
-                        // Set a listener to the animation and configure onAnimationEnd
-                        a.setAnimationListener(new Animation.AnimationListener() {
-                            @Override
-                            public void onAnimationStart(Animation animation) {
-
-                            }
-
-                            @Override
-                            public void onAnimationEnd(Animation animation) {
-                            }
-
-                            @Override
-                            public void onAnimationRepeat(Animation animation) {
-
-                            }
-                        });
-
-                    }
-                    valueAnimator.setDuration(200);
-                    valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            Integer value = (Integer) animation.getAnimatedValue();
-                            view.getLayoutParams().height = value.intValue();
-                            view.requestLayout();
-                        }
-                    });
-                    valueAnimator.start();
-                }
-            });
             routeView = (TextView) v.findViewById(R.id.prediction_route_name);
             timeView = (TextView) v.findViewById(R.id.prediction_arrival_time);
+            timeViewAlt = (TextView) v.findViewById(R.id.prediction_arrival_time_alt);
             buttonView = (CheckBox) v.findViewById(R.id.prediction_favorite_button);
             stopView = (TextView) v.findViewById(R.id.prediction_stop_name);
             view = v;
+
+            v.setOnClickListener(this);
+
+            if (!isViewExpanded) {
+                timeViewAlt.setVisibility(View.GONE);
+                timeViewAlt.setEnabled(false);
+            }
+        }
+
+        public void onClick(final View v) {
+            Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
+
+            if (originalHeight <= 0) {
+                originalHeight = v.getHeight();
+            }
+
+            // Declare a ValueAnimator object
+            ValueAnimator valueAnimator;
+            if (!isViewExpanded) {
+                timeViewAlt.setVisibility(View.VISIBLE);
+                timeViewAlt.setEnabled(true);
+                isViewExpanded = true;
+                valueAnimator =
+                        ValueAnimator.ofInt(v.getHeight(), v.getHeight() + 32);
+            } else {
+                isViewExpanded = false;
+                valueAnimator = ValueAnimator.ofInt(v.getHeight() + 32, v.getHeight());
+
+                timeViewAlt.setVisibility(View.GONE);
+                timeViewAlt.setEnabled(false);
+
+                Animation a = new AlphaAnimation(1.00f, 0.00f); // Fade out
+
+                a.setDuration(200);
+                // Set a listener to the animation and configure onAnimationEnd
+                a.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+            }
+            valueAnimator.setDuration(200);
+            valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    Integer value = (Integer) animation.getAnimatedValue();
+                    v.getLayoutParams().height = value.intValue();
+                    v.requestLayout();
+                }
+            });
+            valueAnimator.start();
         }
 
         public void setBackground(String color){
@@ -124,6 +140,10 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
 
         public TextView getRouteView() {
             return routeView;
+        }
+
+        public TextView getTimeViewAlt() {
+            return timeViewAlt;
         }
 
         public TextView getTimeView() {
@@ -143,7 +163,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         View v = LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.prediction_item, viewGroup, false);
+                .inflate(R.layout.prediction_item_expanded, viewGroup, false);
 
         return new ViewHolder(v);
     }
@@ -167,6 +187,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
         viewHolder.getTimeView().setText(arrivalTime);
+        viewHolder.getTimeViewAlt().setText(arrivalTime);
         viewHolder.getStopView().setText(stopName);
     }
 }

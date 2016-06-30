@@ -37,7 +37,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ArrivalsActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor>,
+        NavigationView.OnNavigationItemSelectedListener{
 
     public static final String BASE_URL = "http://www.ucishuttles.com/";
     private static final String TAG = ArrivalsActivity.class.getSimpleName();
@@ -55,6 +56,7 @@ public class ArrivalsActivity extends AppCompatActivity
     UciBusApiEndpointInterface apiService;
     NavigationView navigationView;
     DrawerLayout drawer;
+    SubMenu routesMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +73,7 @@ public class ArrivalsActivity extends AppCompatActivity
         toggle.syncState();
 
         navigationView = (NavigationView) findViewById(R.id.nav_view);
+        //navigationView.setNavigationItemSelectedListener(this);
 
         initRetrofit();
 
@@ -85,7 +88,13 @@ public class ArrivalsActivity extends AppCompatActivity
     @Override
     public void onResume(){
         super.onResume();
-        drawer.closeDrawer(GravityCompat.START);
+        drawer.closeDrawer(GravityCompat.START, false);
+        if(routesMenu != null){
+            int size = routesMenu.size();
+            for (int i = 0; i < size; i++) {
+                routesMenu.getItem(i).setChecked(false);
+            }
+        }
     }
 
     @Override
@@ -118,6 +127,12 @@ public class ArrivalsActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        drawer.closeDrawer(GravityCompat.START, false);
+        return false;
     }
 
     private void initRetrofit(){
@@ -304,14 +319,16 @@ public class ArrivalsActivity extends AppCompatActivity
 
         switch(id){
             case ROUTE_LOADER:
-                Menu m = navigationView.getMenu();
-                SubMenu routesMenu = m.addSubMenu(Constants.INTENT_KEY);
+                Menu menu = navigationView.getMenu();
+                routesMenu = menu.addSubMenu(Constants.INTENT_KEY);
                 while(data.moveToNext()){
-                    MenuItem item = routesMenu.add(data.getString(C_ROUTE_NAME));
+                    String name = data.getString(C_ROUTE_NAME);
+                    MenuItem item = routesMenu.add(name);
                     item.setIcon(R.drawable.ic_directions_bus_24dp);
+                    item.setCheckable(true);
 
                     Intent intent = new Intent(this, DetailActivity.class);
-                    intent.putExtra("route", data.getInt(C_ROUTE_ID));
+                    intent.putExtra("route", name);
 
                     item.setIntent(intent);
                 }
