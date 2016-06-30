@@ -16,6 +16,7 @@
 
 package com.robsterthelobster.ucibustracker.data;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -24,11 +25,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.robsterthelobster.ucibustracker.ArrivalsFragment;
 import com.robsterthelobster.ucibustracker.R;
+import com.robsterthelobster.ucibustracker.Utility;
 import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 
 public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapter.ViewHolder> {
@@ -42,6 +47,10 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+
+        private int originalHeight = 0;
+        private boolean isViewExpanded = false;
+
         private final TextView routeView;
         private final TextView timeView;
         private final CheckBox buttonView;
@@ -55,6 +64,51 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
                 @Override
                 public void onClick(View v) {
                     Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
+
+                    if (originalHeight <= 0) {
+                        originalHeight = view.getHeight();
+                    }
+
+                    // Declare a ValueAnimator object
+                    ValueAnimator valueAnimator;
+                    if (!isViewExpanded) {
+                        isViewExpanded = true;
+                        valueAnimator = ValueAnimator.ofInt(originalHeight, originalHeight + (int) (originalHeight * 2.0)); // These values in this method can be changed to expand however much you like
+                    } else {
+                        isViewExpanded = false;
+                        valueAnimator = ValueAnimator.ofInt(originalHeight + (int) (originalHeight * 2.0), originalHeight);
+
+                        Animation a = new AlphaAnimation(1.00f, 0.00f); // Fade out
+
+                        a.setDuration(200);
+                        // Set a listener to the animation and configure onAnimationEnd
+                        a.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+
+                            }
+                        });
+
+                    }
+                    valueAnimator.setDuration(200);
+                    valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                        public void onAnimationUpdate(ValueAnimator animation) {
+                            Integer value = (Integer) animation.getAnimatedValue();
+                            view.getLayoutParams().height = value.intValue();
+                            view.requestLayout();
+                        }
+                    });
+                    valueAnimator.start();
                 }
             });
             routeView = (TextView) v.findViewById(R.id.prediction_route_name);
@@ -104,7 +158,8 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
-        String arrivalTime = minutes + " min";
+        double seconds = cursor.getDouble(ArrivalsFragment.C_SECONDS);
+        String arrivalTime = Utility.getArrivalTime(minutes, seconds);
         String color = cursor.getString(ArrivalsFragment.C_COLOR);
 
         viewHolder.getButtonView().setOnCheckedChangeListener(null);

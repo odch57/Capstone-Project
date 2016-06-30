@@ -5,13 +5,17 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <string name="element_text">Element</string>
-    <string name="grid_layout_manager">Grid Layout Manager</string>
-    <string name="linear_layout_manager">Linear Layout Manager</string>
-    <string name="title_activity_arrivals">ArrivalsActivity</string>
+    <string name="title_activity_arrivals">UCI APP TITLE</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <!-- Route Activity strings (Detail and map fragments)-->
+    <string name="route_stops_tab">Stops</string>
+    <string name="route_map_tab">Route Map</string>
+    <string name="title_activity_test">TestAct</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+
 </resources>

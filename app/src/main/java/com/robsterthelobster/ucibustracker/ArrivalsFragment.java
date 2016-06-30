@@ -114,13 +114,14 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.frag_arrivals, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_arrivals, container, false);
         rootView.setTag(TAG);
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView);
 
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(getContext()));
 
         mAdapter = new PredictionAdapter(getContext(), null);
         mRecyclerView.setAdapter(mAdapter);
@@ -141,8 +142,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                         BusContract.ArrivalEntry.CONTENT_URI,
                         ARRIVAL_COLUMNS,
                         BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                        new String[]{"1"},
-                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC");
+                        new String[]{"0"},
+                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
             default:
                 Log.d(TAG, "Not valid id: " + id);
                 return null;

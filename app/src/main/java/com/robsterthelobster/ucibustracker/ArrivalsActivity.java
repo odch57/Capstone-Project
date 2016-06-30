@@ -27,7 +27,6 @@ import com.robsterthelobster.ucibustracker.data.models.Route;
 import com.robsterthelobster.ucibustracker.data.models.Stop;
 import com.robsterthelobster.ucibustracker.data.models.Vehicle;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -38,8 +37,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ArrivalsActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,
-        LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String BASE_URL = "http://www.ucishuttles.com/";
     private static final String TAG = ArrivalsActivity.class.getSimpleName();
@@ -85,6 +83,12 @@ public class ArrivalsActivity extends AppCompatActivity
     }
 
     @Override
+    public void onResume(){
+        super.onResume();
+        drawer.closeDrawer(GravityCompat.START);
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -114,15 +118,6 @@ public class ArrivalsActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        //int id = item.getItemId();
-
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
     private void initRetrofit(){
@@ -230,6 +225,7 @@ public class ArrivalsActivity extends AppCompatActivity
                     List<Prediction> predictions = arrivals.getPredictions();
                     String predictionTime = arrivals.getPredictionTime();
 
+                    int count = 0;
                     Vector<ContentValues> cVVector = new Vector<ContentValues>(predictions.size());
                     for(Prediction prediction : predictions){
                         Log.d(TAG, "Prediction : " + prediction.getArriveTime());
@@ -244,6 +240,12 @@ public class ArrivalsActivity extends AppCompatActivity
                         arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
 
                         cVVector.add(arrivalValues);
+
+                        // i only want the first two predictions
+                        count++;
+                        if(count == 2){
+                            break;
+                        }
                     }
                     if ( cVVector.size() > 0 ) {
                         ContentValues[] cvArray = new ContentValues[cVVector.size()];
@@ -307,7 +309,7 @@ public class ArrivalsActivity extends AppCompatActivity
                 while(data.moveToNext()){
                     MenuItem item = routesMenu.add(data.getString(C_ROUTE_NAME));
                     item.setIcon(R.drawable.ic_directions_bus_24dp);
-                    item.setIntent(new Intent(this, RouteActivity.class));
+                    item.setIntent(new Intent(this, DetailActivity.class));
                 }
                 getLoaderManager().destroyLoader(ROUTE_LOADER);
                 break;
