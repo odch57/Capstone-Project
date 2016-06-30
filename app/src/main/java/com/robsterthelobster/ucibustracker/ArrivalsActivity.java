@@ -305,11 +305,15 @@ public class ArrivalsActivity extends AppCompatActivity
         switch(id){
             case ROUTE_LOADER:
                 Menu m = navigationView.getMenu();
-                SubMenu routesMenu = m.addSubMenu("Routes");
+                SubMenu routesMenu = m.addSubMenu(Constants.INTENT_KEY);
                 while(data.moveToNext()){
                     MenuItem item = routesMenu.add(data.getString(C_ROUTE_NAME));
                     item.setIcon(R.drawable.ic_directions_bus_24dp);
-                    item.setIntent(new Intent(this, DetailActivity.class));
+
+                    Intent intent = new Intent(this, DetailActivity.class);
+                    intent.putExtra("route", data.getInt(C_ROUTE_ID));
+
+                    item.setIntent(intent);
                 }
                 getLoaderManager().destroyLoader(ROUTE_LOADER);
                 break;

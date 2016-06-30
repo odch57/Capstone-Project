@@ -32,7 +32,6 @@
 
         <activity
             android:name=".DetailActivity"
-            android:label="@string/title_activity_route"
             android:theme="@style/AppTheme"/>
         <activity
             android:name=".ArrivalsActivity"

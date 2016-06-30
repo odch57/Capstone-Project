@@ -23,15 +23,17 @@ public class DetailActivity extends AppCompatActivity {
 
     private MyAdapter mAdapter;
     private ViewPager mPager;
-    Toolbar toolbar;
+    private Toolbar toolbar;
+    static int routeID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
+        routeID = getIntent().getExtras().getInt(Constants.INTENT_KEY);
+
         toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
-        toolbar.setTitle("Hello Title");
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -53,10 +55,8 @@ public class DetailActivity extends AppCompatActivity {
         // Give the TabLayout the ViewPager
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(mPager);
-
     }
 
-    /** A simple FragmentPagerAdapter that returns two RecyclerViewFragment and a SupportMapFragment. */
     public static class MyAdapter extends FragmentPagerAdapter {
 
         private final int PAGE_COUNT = 2;
@@ -77,10 +77,17 @@ public class DetailActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    return new ArrivalsFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(Constants.BUNDLE_KEY, routeID);
+
+                    ArrivalsFragment fragment = new ArrivalsFragment();
+                    fragment.setArguments(bundle);
+
+                    return fragment;
                 case 1:
                     return SupportMapFragment.newInstance();
                 default:
+                    Log.e(TAG, "Pager position does not exist");
                     return null;
             }
         }
@@ -98,20 +105,4 @@ public class DetailActivity extends AppCompatActivity {
             }
         }
     }
-
-    /** A simple fragment that displays a TextView. */
-    public static class RecyclerViewFragment extends Fragment {
-
-        RecyclerView mRecyclerView;
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
-            View rootView = inflater.inflate(R.layout.fragment_arrivals, container, false);
-
-            mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView);
-            return rootView;
-        }
-    }
-
-
 }

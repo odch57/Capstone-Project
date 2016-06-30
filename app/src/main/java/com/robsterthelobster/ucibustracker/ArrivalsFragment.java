@@ -78,9 +78,18 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     private GoogleApiClient mGoogleApiClient;
     protected LocationRequest mLocationRequest;
 
+    private String routeID;
+    private boolean hasRouteID = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            routeID = arguments.getInt(Constants.BUNDLE_KEY) + "";
+            hasRouteID = true;
+        }
 
         mGoogleApiClient = new GoogleApiClient.Builder(getContext())
                 .addApi(LocationServices.API)
@@ -138,12 +147,23 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public Loader onCreateLoader(int id, Bundle bundle) {
         switch (id) {
             case ARRIVAL_LOADER:
-                return new CursorLoader(getContext(),
-                        BusContract.ArrivalEntry.CONTENT_URI,
-                        ARRIVAL_COLUMNS,
-                        BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                        new String[]{"0"},
-                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
+                if(hasRouteID){
+                    return new CursorLoader(getContext(),
+                            BusContract.ArrivalEntry.CONTENT_URI,
+                            ARRIVAL_COLUMNS,
+                            BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
+                                    " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
+                                    BusContract.ArrivalEntry.ROUTE_ID + " = ?",
+                            new String[]{"0", routeID},
+                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
+                }else {
+                    return new CursorLoader(getContext(),
+                            BusContract.ArrivalEntry.CONTENT_URI,
+                            ARRIVAL_COLUMNS,
+                            BusContract.ArrivalEntry.IS_CURRENT + " = ?",
+                            new String[]{"0"},
+                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
+                }
             default:
                 Log.d(TAG, "Not valid id: " + id);
                 return null;
