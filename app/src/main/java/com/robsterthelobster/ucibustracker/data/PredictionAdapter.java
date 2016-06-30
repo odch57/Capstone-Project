@@ -20,6 +20,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,6 +53,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         private int originalHeight = 0;
+        private int expandingHeight = 0;
         private boolean isViewExpanded = false;
 
         private final TextView routeView;
@@ -79,11 +81,13 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
             }
         }
 
-        public void onClick(final View v) {
+        public void onClick(View v) {
             Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
 
-            if (originalHeight <= 0) {
-                originalHeight = v.getHeight();
+            // initialization
+            if (originalHeight == 0) {
+                originalHeight = view.getHeight();
+                expandingHeight = (int)(originalHeight * .25);
             }
 
             // Declare a ValueAnimator object
@@ -91,19 +95,18 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
             if (!isViewExpanded) {
                 timeViewAlt.setVisibility(View.VISIBLE);
                 timeViewAlt.setEnabled(true);
+                Log.d(TAG, timeViewAlt.getHeight() + "");
                 isViewExpanded = true;
-                valueAnimator =
-                        ValueAnimator.ofInt(v.getHeight(), v.getHeight() + 32);
+                valueAnimator = ValueAnimator.ofInt(originalHeight,
+                                originalHeight + expandingHeight);
             } else {
                 isViewExpanded = false;
-                valueAnimator = ValueAnimator.ofInt(v.getHeight() + 32, v.getHeight());
-
-                timeViewAlt.setVisibility(View.GONE);
-                timeViewAlt.setEnabled(false);
+                valueAnimator = ValueAnimator.ofInt(originalHeight + expandingHeight,
+                        originalHeight);
 
                 Animation a = new AlphaAnimation(1.00f, 0.00f); // Fade out
 
-                a.setDuration(200);
+                a.setDuration(100);
                 // Set a listener to the animation and configure onAnimationEnd
                 a.setAnimationListener(new Animation.AnimationListener() {
                     @Override
@@ -113,7 +116,8 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
-
+                        timeViewAlt.setVisibility(View.GONE);
+                        timeViewAlt.setEnabled(false);
                     }
 
                     @Override
@@ -121,14 +125,15 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
 
                     }
                 });
+                timeViewAlt.startAnimation(a);
             }
-            valueAnimator.setDuration(200);
+            valueAnimator.setDuration(100);
             valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 public void onAnimationUpdate(ValueAnimator animation) {
                     Integer value = (Integer) animation.getAnimatedValue();
-                    v.getLayoutParams().height = value.intValue();
-                    v.requestLayout();
+                    view.getLayoutParams().height = value;
+                    view.requestLayout();
                 }
             });
             valueAnimator.start();

@@ -157,8 +157,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                             BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
                                     " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
                                     BusContract.ArrivalEntry.ROUTE_NAME + " = ?",
-                            new String[]{"0", routeName},
-                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
+                            new String[]{"1", routeName},
+                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC");
                 }else {
                     return new CursorLoader(getContext(),
                             BusContract.ArrivalEntry.CONTENT_URI,
