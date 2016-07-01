@@ -5,6 +5,6 @@ package com.robsterthelobster.ucibustracker;
  */
 public class Constants {
 
-    public static final String INTENT_KEY = "route";
-    public static final String BUNDLE_KEY = "bundle";
+    public static final String ROUTE_NAME_KEY = "route";
+    public static final String ROUTE_ID_KEY = "map";
 }

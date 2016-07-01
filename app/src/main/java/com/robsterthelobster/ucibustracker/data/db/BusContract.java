@@ -49,6 +49,7 @@ public class BusContract {
 
         public static final String TABLE_NAME = "stops";
 
+        public static final String ROUTE_ID = "route_id";
         public static final String STOP_ID = "stop_id";
         public static final String STOP_NAME = "stop_name";
         public static final String LONGITUDE = "longitude";
@@ -56,6 +57,10 @@ public class BusContract {
 
         public static Uri buildStopUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildStopsInRouteUri(String routeID){
+            return CONTENT_URI.buildUpon().appendPath(routeID).build();
         }
     }
 

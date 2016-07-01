@@ -48,11 +48,11 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    private static final String TAG = ArrivalsFragment.class.getSimpleName();
+    private final String TAG = ArrivalsFragment.class.getSimpleName();
     private final int REQUEST_LOCATION = 0;
 
-    private static final int ARRIVAL_LOADER = 0;
-    private static final String[] ARRIVAL_COLUMNS = {
+    private final int ARRIVAL_LOADER = 0;
+    private final String[] ARRIVAL_COLUMNS = {
             BusContract.ArrivalEntry._ID,
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_ID,
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_NAME,
@@ -95,7 +95,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
         Bundle arguments = getArguments();
         if (arguments != null) {
-            routeName = arguments.getString(Constants.BUNDLE_KEY);
+            routeName = arguments.getString(Constants.ROUTE_NAME_KEY);
             hasRouteID = true;
         }
 

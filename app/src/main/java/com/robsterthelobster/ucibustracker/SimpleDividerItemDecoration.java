@@ -8,7 +8,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 /**
- * Created by robin on 6/29/2016.
  *
  * http://stackoverflow.com/questions/31242812/
  * how-can-a-divider-line-be-added-in-an-android-recyclerview

@@ -40,11 +40,11 @@ public class ArrivalsActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor>,
         NavigationView.OnNavigationItemSelectedListener{
 
-    public static final String BASE_URL = "http://www.ucishuttles.com/";
-    private static final String TAG = ArrivalsActivity.class.getSimpleName();
+    public final String BASE_URL = "http://www.ucishuttles.com/";
+    private final String TAG = ArrivalsActivity.class.getSimpleName();
 
-    private static final int ROUTE_LOADER = 0;
-    private static final String[] ROUTE_COLUMNS = {
+    private final int ROUTE_LOADER = 0;
+    private final String[] ROUTE_COLUMNS = {
             BusContract.RouteEntry.ROUTE_ID,
             BusContract.RouteEntry.ROUTE_NAME,
             BusContract.RouteEntry.COLOR
@@ -205,6 +205,7 @@ public class ArrivalsActivity extends AppCompatActivity
                         ContentValues stopValues = new ContentValues();
                         ContentValues favoriteValues = new ContentValues();
                         int stopID = stop.getId();
+                        stopValues.put(BusContract.StopEntry.ROUTE_ID, routeID);
                         stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
                         stopValues.put(BusContract.StopEntry.STOP_NAME, stop.getName());
                         stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
@@ -338,15 +339,17 @@ public class ArrivalsActivity extends AppCompatActivity
         switch(id){
             case ROUTE_LOADER:
                 Menu menu = navigationView.getMenu();
-                routesMenu = menu.addSubMenu(Constants.INTENT_KEY);
+                routesMenu = menu.addSubMenu(Constants.ROUTE_NAME_KEY);
                 while(data.moveToNext()){
-                    String name = data.getString(C_ROUTE_NAME);
-                    MenuItem item = routesMenu.add(name);
+                    String routeName = data.getString(C_ROUTE_NAME);
+                    int routeID = data.getInt(C_ROUTE_ID);
+                    MenuItem item = routesMenu.add(routeName);
                     item.setIcon(R.drawable.ic_directions_bus_24dp);
                     item.setCheckable(true);
 
                     Intent intent = new Intent(this, DetailActivity.class);
-                    intent.putExtra("route", name);
+                    intent.putExtra(Constants.ROUTE_NAME_KEY, routeName);
+                    intent.putExtra(Constants.ROUTE_ID_KEY, routeID);
 
                     item.setIntent(intent);
                 }
@@ -355,7 +358,6 @@ public class ArrivalsActivity extends AppCompatActivity
             default:
                 Log.d(TAG, "No such id: " + id);
         }
-
     }
 
     @Override

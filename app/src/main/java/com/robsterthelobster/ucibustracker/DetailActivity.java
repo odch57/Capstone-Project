@@ -1,6 +1,7 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -21,14 +22,17 @@ public class DetailActivity extends AppCompatActivity {
     private MyAdapter mAdapter;
     private ViewPager mPager;
     private Toolbar toolbar;
-    static String routeName;
+    private static String routeName;
+    private static int routeID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        routeName = getIntent().getExtras().getString(Constants.INTENT_KEY);
+        Bundle bundle = getIntent().getExtras();
+        routeName = bundle.getString(Constants.ROUTE_NAME_KEY);
+        routeID = bundle.getInt(Constants.ROUTE_ID_KEY);
 
         toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
@@ -73,17 +77,21 @@ public class DetailActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem(int position) {
+            Bundle bundle = new Bundle();
             switch (position) {
                 case 0:
-                    Bundle bundle = new Bundle();
-                    bundle.putString(Constants.BUNDLE_KEY, routeName);
+                    bundle.putString(Constants.ROUTE_NAME_KEY, routeName);
 
-                    ArrivalsFragment fragment = new ArrivalsFragment();
-                    fragment.setArguments(bundle);
+                    ArrivalsFragment arrivalsFragment = new ArrivalsFragment();
+                    arrivalsFragment.setArguments(bundle);
 
-                    return fragment;
+                    return arrivalsFragment;
                 case 1:
-                    return new MapFragment();
+                    bundle.putInt(Constants.ROUTE_ID_KEY, routeID);
+
+                    MapFragment mapFragment = new MapFragment();
+                    mapFragment.setArguments(bundle);
+                    return mapFragment;
                 default:
                     Log.e(TAG, "Pager position does not exist");
                     return null;

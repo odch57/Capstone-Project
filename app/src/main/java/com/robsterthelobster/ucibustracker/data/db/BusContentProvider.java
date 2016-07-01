@@ -17,6 +17,7 @@ public class BusContentProvider extends ContentProvider {
 
     private static final int ROUTES = 100;
     private static final int STOPS = 200;
+    private static final int STOPS_ROUTE = 201;
     private static final int ARRIVALS = 300;
     private static final int ARRIVALS_ROUTE_STOP = 301;
     private static final int VEHICLES = 400;
@@ -24,31 +25,30 @@ public class BusContentProvider extends ContentProvider {
     private static final int FAVORITES = 500;
 
     private static final SQLiteQueryBuilder arrivalsRouteStopBuilder;
+    private static final SQLiteQueryBuilder stopsRouteBuilder;
 
     static {
         arrivalsRouteStopBuilder = new SQLiteQueryBuilder();
 
-        // Arrivals
+        /* Arrivals
         // INNER JOIN Routes ON Arrivals.route_id = Routes.route_id
         // INNER JOIN Stops ON Arrivals.stop_id = Stops.stop_id
-        //
+        // INNER JOIN Stops ON Arrivals + Favorites where ids are equal
         // JOIN to get color and stop name
+        */
         arrivalsRouteStopBuilder.setTables(
                 BusContract.ArrivalEntry.TABLE_NAME +
-                        " INNER JOIN " +
-                        BusContract.RouteEntry.TABLE_NAME +
+                        " INNER JOIN " + BusContract.RouteEntry.TABLE_NAME +
                         " ON " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.ROUTE_ID +
                         " = " + BusContract.RouteEntry.TABLE_NAME +
                         "." + BusContract.RouteEntry.ROUTE_ID +
-                        " INNER JOIN " +
-                        BusContract.StopEntry.TABLE_NAME +
+                        " INNER JOIN " + BusContract.StopEntry.TABLE_NAME +
                         " ON " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.STOP_ID +
                         " = " + BusContract.StopEntry.TABLE_NAME +
                         "." + BusContract.StopEntry.STOP_ID +
-                        " INNER JOIN " +
-                        BusContract.FavoriteEntry.TABLE_NAME +
+                        " INNER JOIN " + BusContract.FavoriteEntry.TABLE_NAME +
                         " ON " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.ROUTE_ID +
                         " = " + BusContract.FavoriteEntry.TABLE_NAME +
@@ -56,7 +56,28 @@ public class BusContentProvider extends ContentProvider {
                         " AND " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.STOP_ID +
                         " = " + BusContract.FavoriteEntry.TABLE_NAME +
-                        "." + BusContract.FavoriteEntry.STOP_ID );
+                        "." + BusContract.FavoriteEntry.STOP_ID +
+                        " AND " + BusContract.RouteEntry.TABLE_NAME +
+                        "." + BusContract.RouteEntry.ROUTE_ID +
+                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
+                        "." + BusContract.FavoriteEntry.ROUTE_ID +
+                        " AND " + BusContract.StopEntry.TABLE_NAME +
+                        "." + BusContract.StopEntry.STOP_ID +
+                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
+                        "." + BusContract.FavoriteEntry.STOP_ID);
+    }
+
+    static {
+        stopsRouteBuilder = new SQLiteQueryBuilder();
+
+        stopsRouteBuilder.setTables(
+                BusContract.StopEntry.TABLE_NAME +
+                        " INNER JOIN " +
+                        BusContract.RouteEntry.TABLE_NAME +
+                        " ON " + BusContract.StopEntry.TABLE_NAME +
+                        "." + BusContract.StopEntry.ROUTE_ID +
+                        " = " + BusContract.RouteEntry.TABLE_NAME +
+                        "." + BusContract.RouteEntry.ROUTE_ID);
     }
 
     static UriMatcher buildUriMatcher() {
@@ -70,6 +91,7 @@ public class BusContentProvider extends ContentProvider {
         matcher.addURI(authority, BusContract.PATH_VEHICLES, VEHICLES);
         matcher.addURI(authority, BusContract.PATH_FAVORITE, FAVORITES);
 
+        matcher.addURI(authority, BusContract.PATH_STOPS + "/*", STOPS_ROUTE);
         matcher.addURI(authority, BusContract.PATH_ARRIVALS + "/*/*", ARRIVALS_ROUTE_STOP);
         matcher.addURI(authority, BusContract.PATH_VEHICLES + "/*", VEHICLES_ROUTE);
 
@@ -128,6 +150,8 @@ public class BusContentProvider extends ContentProvider {
             case ROUTES:
                 return BusContract.RouteEntry.CONTENT_TYPE;
             case STOPS:
+                return BusContract.StopEntry.CONTENT_TYPE;
+            case STOPS_ROUTE:
                 return BusContract.StopEntry.CONTENT_TYPE;
             case ARRIVALS:
                 return BusContract.ArrivalEntry.CONTENT_TYPE;
@@ -213,15 +237,13 @@ public class BusContentProvider extends ContentProvider {
                         BusContract.StopEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
+            case STOPS_ROUTE:
+                retCurosr = stopsRouteBuilder.query(db,
+                        projection, selection, selectionArgs, null, null, sortOrder);
+                break;
             case ARRIVALS:
                 retCurosr = arrivalsRouteStopBuilder.query(db,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
-                );
+                        projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case ARRIVALS_ROUTE_STOP:
                 //TODO

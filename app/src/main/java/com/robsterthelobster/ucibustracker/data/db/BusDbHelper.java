@@ -24,10 +24,14 @@ public class BusDbHelper extends SQLiteOpenHelper{
 
     final String SQL_CREATE_STOP_TABLE =
             "CREATE TABLE " + BusContract.StopEntry.TABLE_NAME + " (" +
+                    BusContract.StopEntry.ROUTE_ID + " INTEGER, " +
                     BusContract.StopEntry.STOP_ID + " INTEGER PRIMARY KEY, " +
                     BusContract.StopEntry.STOP_NAME + " TEXT NOT NULL, " +
                     BusContract.StopEntry.LATITUDE + " REAL NOT NULL, " +
                     BusContract.StopEntry.LONGITUDE + " REAL NOT NULL, " +
+                    " FOREIGN KEY (" + BusContract.StopEntry.ROUTE_ID  + ") REFERENCES " +
+                    BusContract.RouteEntry.TABLE_NAME + " (" + BusContract.RouteEntry.ROUTE_ID
+                    + "), " +
                     " UNIQUE (" + BusContract.StopEntry.STOP_ID + ") ON CONFLICT REPLACE" +
                     " );";
 
