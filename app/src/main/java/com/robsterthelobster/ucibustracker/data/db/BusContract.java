@@ -108,6 +108,14 @@ public class BusContract {
         public static Uri buildVehicleUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+        public static Uri buildVehiclesInRouteUri(String routeID){
+            return CONTENT_URI.buildUpon().appendPath(routeID).build();
+        }
+
+        public static String getIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
     }
 
     public static final class FavoriteEntry implements BaseColumns {
@@ -120,6 +128,7 @@ public class BusContract {
 
         public static final String TABLE_NAME = "favorites";
 
+        public static final String FAV_KEY = "favorite_id";
         public static final String ROUTE_ID = "route_id";
         public static final String STOP_ID = "stop_id";
         public static final String FAVORITE = "favorite";

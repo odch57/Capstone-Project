@@ -151,6 +151,7 @@ public class ArrivalsActivity extends AppCompatActivity
                 List<Route> routes = response.body();
                 if(routes != null){
                     Log.d(TAG, "retrofit routeCall : success");
+
                     Vector<ContentValues> cVVector = new Vector<ContentValues>(routes.size());
                     for(Route route : routes){
                         //Log.d(TAG, "route name: " + route.getName());
@@ -164,6 +165,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
                         cVVector.add(routeValues);
 
+                        callVehicles(routeID);
                         callStops(routeID);
                     }
                     if ( cVVector.size() > 0 ) {
@@ -195,6 +197,7 @@ public class ArrivalsActivity extends AppCompatActivity
                 contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
                 getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,
                         null, null);
+
                 List<Stop> stops = response.body();
                 if(stops != null){
                     Log.d(TAG, "retrofit stopsCall : success");
@@ -211,6 +214,8 @@ public class ArrivalsActivity extends AppCompatActivity
                         stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
                         stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
 
+                        favoriteValues.put(BusContract.FavoriteEntry.FAV_KEY,
+                                routeID + "-" + stopID);
                         favoriteValues.put(BusContract.FavoriteEntry.ROUTE_ID, routeID);
                         favoriteValues.put(BusContract.FavoriteEntry.STOP_ID, stopID);
                         favoriteValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
@@ -286,7 +291,6 @@ public class ArrivalsActivity extends AppCompatActivity
                     if(arrivalValues.size() > 0) {
                         getContentResolver().insert(BusContract.ArrivalEntry.CONTENT_URI, arrivalValues);
                     }
-                    callVehicles(routeID);
                 }
             }
 
@@ -304,8 +308,22 @@ public class ArrivalsActivity extends AppCompatActivity
             public void onResponse(Call<List<Vehicle>> call, Response<List<Vehicle>> response) {
                 List<Vehicle> vehicles = response.body();
                 if(vehicles != null){
+                    Vector<ContentValues> cVVector = new Vector<>(vehicles.size());
                     for(Vehicle vehicle : vehicles){
-                        Log.d(TAG, "Percentage: " + vehicle.getApcPercentage());
+                        ContentValues vehicleValues = new ContentValues();
+
+                        vehicleValues.put(BusContract.VehicleEntry.ROUTE_ID, vehicle.getRouteId());
+                        vehicleValues.put(BusContract.VehicleEntry.BUS_NAME, vehicle.getName());
+                        vehicleValues.put(BusContract.VehicleEntry.LATITUDE, vehicle.getLatitude());
+                        vehicleValues.put(BusContract.VehicleEntry.LONGITUDE, vehicle.getLongitude());
+                        vehicleValues.put(BusContract.VehicleEntry.PERCENTAGE, vehicle.getApcPercentage());
+
+                        cVVector.add(vehicleValues);
+                    }
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.VehicleEntry.CONTENT_URI, cvArray);
                     }
                 }
             }

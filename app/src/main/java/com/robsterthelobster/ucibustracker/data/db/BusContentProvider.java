@@ -56,14 +56,6 @@ public class BusContentProvider extends ContentProvider {
                         " AND " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.STOP_ID +
                         " = " + BusContract.FavoriteEntry.TABLE_NAME +
-                        "." + BusContract.FavoriteEntry.STOP_ID +
-                        " AND " + BusContract.RouteEntry.TABLE_NAME +
-                        "." + BusContract.RouteEntry.ROUTE_ID +
-                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
-                        "." + BusContract.FavoriteEntry.ROUTE_ID +
-                        " AND " + BusContract.StopEntry.TABLE_NAME +
-                        "." + BusContract.StopEntry.STOP_ID +
-                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
                         "." + BusContract.FavoriteEntry.STOP_ID);
     }
 
@@ -177,14 +169,16 @@ public class BusContentProvider extends ContentProvider {
 
         switch(match){
             case ROUTES:
-                _id = db.insertWithOnConflict(BusContract.RouteEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                _id = db.insertWithOnConflict(BusContract.RouteEntry.TABLE_NAME, null,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 if ( _id > 0 )
                     returnUri = BusContract.RouteEntry.buildRouteUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             case STOPS:
-                _id = db.insertWithOnConflict(BusContract.StopEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                _id = db.insertWithOnConflict(BusContract.StopEntry.TABLE_NAME, null,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 if ( _id > 0 )
                     returnUri = BusContract.StopEntry.buildStopUri(_id);
                 else
@@ -205,7 +199,9 @@ public class BusContentProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             case FAVORITES:
-                _id = db.insert(BusContract.FavoriteEntry.TABLE_NAME, null, values);
+                // can only be one entry
+                _id = db.insertWithOnConflict(BusContract.FavoriteEntry.TABLE_NAME, null,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 if ( _id > 0 )
                     returnUri = BusContract.FavoriteEntry.buildFavoriteUri(_id);
                 else
@@ -258,9 +254,7 @@ public class BusContentProvider extends ContentProvider {
                 break;
             case VEHICLES_ROUTE:
                 //TODO
-                retCurosr = db.query(
-                        BusContract.VehicleEntry.TABLE_NAME, projection,
-                        selection, selectionArgs, null, null, sortOrder);
+                retCurosr = getVehiclesWithRoute(uri, projection, sortOrder);
                 break;
             case FAVORITES:
                 retCurosr = db.query(
@@ -359,5 +353,21 @@ public class BusContentProvider extends ContentProvider {
             db.endTransaction();
         }
         return returnCount;
+    }
+
+    private Cursor getVehiclesWithRoute(Uri uri, String[] projection, String sortOrder){
+        String selection = BusContract.VehicleEntry.ROUTE_ID + "=?";
+        String[] selectionArgs = new String[]{BusContract.VehicleEntry.getIdFromUri(uri)};
+
+        Cursor retCursor = mDbHelper.getReadableDatabase().query(
+                BusContract.VehicleEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+        return retCursor;
     }
 }

@@ -60,7 +60,7 @@ public class BusDbHelper extends SQLiteOpenHelper{
     final String SQL_CREATE_VEHICLE_TABLE =
             "CREATE TABLE " + BusContract.VehicleEntry.TABLE_NAME + " (" +
                     BusContract.VehicleEntry.ROUTE_ID + " INTEGER NOT NULL, " +
-                    BusContract.VehicleEntry.BUS_NAME + " TEXT NOT NULL, " +
+                    BusContract.VehicleEntry.BUS_NAME + " TEXT PRIMARY KEY, " +
                     BusContract.VehicleEntry.LATITUDE + " REAL NOT NULL, " +
                     BusContract.VehicleEntry.LONGITUDE + " REAL NOT NULL, " +
                     BusContract.VehicleEntry.PERCENTAGE + " INTEGER NOT NULL " +
@@ -68,8 +68,9 @@ public class BusDbHelper extends SQLiteOpenHelper{
 
     final String SQL_CREATE_FAVORITE_TABLE =
             "CREATE TABLE " + BusContract.FavoriteEntry.TABLE_NAME + " (" +
-                    BusContract.FavoriteEntry.ROUTE_ID + " TEXT NOT NULL, " +
-                    BusContract.FavoriteEntry.STOP_ID + " TEXT NOT NULL, " +
+                    BusContract.FavoriteEntry.FAV_KEY + " TEXT PRIMARY KEY, " +
+                    BusContract.FavoriteEntry.ROUTE_ID + " INTEGER NOT NULL, " +
+                    BusContract.FavoriteEntry.STOP_ID + " INTEGER NOT NULL, " +
                     BusContract.FavoriteEntry.FAVORITE + " INTEGER NOT NULL," +
                     " FOREIGN KEY (" + BusContract.FavoriteEntry.ROUTE_ID  + ") REFERENCES " +
                     BusContract.RouteEntry.TABLE_NAME + " (" + BusContract.RouteEntry.ROUTE_ID

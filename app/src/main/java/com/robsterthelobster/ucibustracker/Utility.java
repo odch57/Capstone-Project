@@ -1,6 +1,7 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -34,5 +35,16 @@ public class Utility {
             return "LAST";
         }
         return minutes + " min";
+    }
+
+    public static float hexToFloat(String colorStr) {
+        colorStr = colorStr.replace("#", "");
+        int color = (int)Long.parseLong(colorStr, 16);
+        int red = (color >> 16) & 0xFF;
+        int green = (color >> 8) & 0xFF;
+        int blue = (color >> 0) & 0xFF;
+        float[] hsv = new float[3];
+        Color.RGBToHSV(red, green, blue, hsv);
+        return hsv[0];
     }
 }
