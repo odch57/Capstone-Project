@@ -64,7 +64,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
             BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR,
             BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME,
-            BusContract.FavoriteEntry.TABLE_NAME + "." + BusContract.FavoriteEntry.FAVORITE
+            //BusContract.FavoriteEntry.TABLE_NAME + "." + BusContract.FavoriteEntry.FAVORITE
     };
     public static final int C_ROUTE_ID = 1;
     public static final int C_ROUTE_NAME = 2;
@@ -76,7 +76,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int C_SECONDS = 8;
     public static final int C_COLOR = 9;
     public static final int C_STOP_NAME = 10;
-    public static final int C_FAVORITE = 11;
+    //public static final int C_FAVORITE = 11;
 
     protected RecyclerView mRecyclerView;
     protected PredictionAdapter mAdapter;

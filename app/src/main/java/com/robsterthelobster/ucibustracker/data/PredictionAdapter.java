@@ -193,7 +193,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
         int minutesAlt = cursor.getInt(ArrivalsFragment.C_MIN_ALT);
         double seconds = cursor.getDouble(ArrivalsFragment.C_SECONDS);
-        int isChecked = cursor.getInt(ArrivalsFragment.C_FAVORITE);
+        //int isChecked = cursor.getInt(ArrivalsFragment.C_FAVORITE);
         
         final String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
@@ -201,13 +201,12 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
         String altArrivalTime = Utility.getArrivalTime(minutesAlt);
 
-        CheckBox checkBox = viewHolder.getButtonView();
-        if(isChecked == 1){
-            checkBox.setChecked(true);
-        }else{
-            checkBox.setChecked(false);
-        }
-
+//        CheckBox checkBox = viewHolder.getButtonView();
+//        if(isChecked == 1){
+//            checkBox.setChecked(true);
+//        }else{
+//            checkBox.setChecked(false);
+//        }
 //        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 //            @Override
 //            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {

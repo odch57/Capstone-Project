@@ -49,14 +49,14 @@ public class BusContentProvider extends ContentProvider {
                         "." + BusContract.StopEntry.STOP_ID +
                         " INNER JOIN " +
                         BusContract.FavoriteEntry.TABLE_NAME +
-                        " ON " + BusContract.RouteEntry.TABLE_NAME +
-                        "." + BusContract.RouteEntry.ROUTE_ID +
+                        " ON " + BusContract.ArrivalEntry.TABLE_NAME +
+                        "." + BusContract.ArrivalEntry.ROUTE_ID +
                         " = " + BusContract.FavoriteEntry.TABLE_NAME +
                         "." + BusContract.FavoriteEntry.ROUTE_ID +
-                        " AND " + BusContract.StopEntry.TABLE_NAME +
-                        "." + BusContract.StopEntry.STOP_ID +
+                        " AND " + BusContract.ArrivalEntry.TABLE_NAME +
+                        "." + BusContract.ArrivalEntry.STOP_ID +
                         " = " + BusContract.FavoriteEntry.TABLE_NAME +
-                        "." + BusContract.FavoriteEntry.STOP_ID);
+                        "." + BusContract.FavoriteEntry.STOP_ID );
     }
 
     static UriMatcher buildUriMatcher() {

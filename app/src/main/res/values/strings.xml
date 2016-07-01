@@ -11,5 +11,9 @@
     <!-- Route Activity strings (Detail and map fragments)-->
     <string name="route_stops_tab">Stops</string>
     <string name="route_map_tab">Route Map</string>
+    <string name="title_activity_maps">Map</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>
