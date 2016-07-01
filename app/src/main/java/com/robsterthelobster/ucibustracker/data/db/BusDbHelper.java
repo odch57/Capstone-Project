@@ -39,6 +39,8 @@ public class BusDbHelper extends SQLiteOpenHelper{
                     BusContract.ArrivalEntry.STOP_ID + " INTEGER NOT NULL, " +
                     BusContract.ArrivalEntry.PREDICTION_TIME + " TEXT NOT NULL, " +
                     BusContract.ArrivalEntry.MINUTES + " INTEGER NOT NULL, " +
+                    BusContract.ArrivalEntry.MIN_ALT + " INTEGER, " +
+                    BusContract.ArrivalEntry.MIN_ALT_2 + " INTEGER, " +
                     BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " REAL NOT NULL, " +
                     BusContract.ArrivalEntry.IS_CURRENT + " INTEGER NOT NULL, " +
 
@@ -60,6 +62,19 @@ public class BusDbHelper extends SQLiteOpenHelper{
                     BusContract.VehicleEntry.PERCENTAGE + " INTEGER NOT NULL " +
                     " );";
 
+    final String SQL_CREATE_FAVORITE_TABLE =
+            "CREATE TABLE " + BusContract.FavoriteEntry.TABLE_NAME + " (" +
+                    BusContract.FavoriteEntry.ROUTE_ID + " TEXT NOT NULL, " +
+                    BusContract.FavoriteEntry.STOP_ID + " TEXT NOT NULL, " +
+                    BusContract.FavoriteEntry.FAVORITE + " INTEGER NOT NULL," +
+                    " FOREIGN KEY (" + BusContract.FavoriteEntry.ROUTE_ID  + ") REFERENCES " +
+                    BusContract.RouteEntry.TABLE_NAME + " (" + BusContract.RouteEntry.ROUTE_ID
+                    + "), " +
+                    " FOREIGN KEY (" + BusContract.FavoriteEntry.STOP_ID  + ") REFERENCES " +
+                    BusContract.StopEntry.TABLE_NAME + " (" + BusContract.StopEntry.STOP_ID
+                    + ") " +
+                    " );";
+
     public BusDbHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -70,6 +85,7 @@ public class BusDbHelper extends SQLiteOpenHelper{
         db.execSQL(SQL_CREATE_STOP_TABLE);
         db.execSQL(SQL_CREATE_ARRIVAL_TABLE);
         db.execSQL(SQL_CREATE_VEHICLE_TABLE);
+        db.execSQL(SQL_CREATE_FAVORITE_TABLE);
     }
 
     @Override
@@ -78,6 +94,7 @@ public class BusDbHelper extends SQLiteOpenHelper{
         db.execSQL(SQL_DELETE + BusContract.ArrivalEntry.TABLE_NAME);
         db.execSQL(SQL_DELETE + BusContract.StopEntry.TABLE_NAME);
         db.execSQL(SQL_DELETE + BusContract.RouteEntry.TABLE_NAME);
+        db.execSQL(SQL_DELETE + BusContract.FavoriteEntry.TABLE_NAME);
         onCreate(db);
     }
 

@@ -59,18 +59,24 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.STOP_ID,
             BusContract.ArrivalEntry.PREDICTION_TIME,
             BusContract.ArrivalEntry.MINUTES,
+            BusContract.ArrivalEntry.MIN_ALT,
+            BusContract.ArrivalEntry.MIN_ALT_2,
             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
             BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR,
-            BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME
+            BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME,
+            BusContract.FavoriteEntry.TABLE_NAME + "." + BusContract.FavoriteEntry.FAVORITE
     };
     public static final int C_ROUTE_ID = 1;
     public static final int C_ROUTE_NAME = 2;
     public static final int C_STOP_ID = 3;
     public static final int C_PREDICTION_TIME = 4;
     public static final int C_MINUTES = 5;
-    public static final int C_SECONDS = 6;
-    public static final int C_COLOR = 7;
-    public static final int C_STOP_NAME = 8;
+    public static final int C_MIN_ALT = 6;
+    public static final int C_MIN_ALT2 = 7;
+    public static final int C_SECONDS = 8;
+    public static final int C_COLOR = 9;
+    public static final int C_STOP_NAME = 10;
+    public static final int C_FAVORITE = 11;
 
     protected RecyclerView mRecyclerView;
     protected PredictionAdapter mAdapter;
@@ -164,7 +170,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                             BusContract.ArrivalEntry.CONTENT_URI,
                             ARRIVAL_COLUMNS,
                             BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                            new String[]{"0"},
+                            new String[]{"1"},
                             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
                 }
             default:
@@ -178,7 +184,9 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         if(cursor.getCount() == 0){
             mRecyclerView.setVisibility(View.INVISIBLE);
             emptyView.setVisibility(View.VISIBLE);
-
+        }else{
+            mRecyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.INVISIBLE);
         }
         mAdapter.swapCursor(cursor);
     }

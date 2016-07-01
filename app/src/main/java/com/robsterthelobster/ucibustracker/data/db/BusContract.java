@@ -17,6 +17,7 @@ public class BusContract {
     public static final String PATH_STOPS = "stops";
     public static final String PATH_ARRIVALS = "arrivals";
     public static final String PATH_VEHICLES = "vehicles";
+    public static final String PATH_FAVORITE = "favorites";
 
     public static final class RouteEntry implements BaseColumns{
 
@@ -73,14 +74,14 @@ public class BusContract {
         public static final String STOP_ID = "stop_id";
         public static final String PREDICTION_TIME = "prediction_time";
         public static final String MINUTES = "minutes";
+        public static final String MIN_ALT = "minutes_alt";
+        public static final String MIN_ALT_2 = "minutes_alt_2";
         public static final String SECONDS_TO_ARRIVAL = "seconds_to_arrival";
         public static final String IS_CURRENT = "is_current";
 
         public static Uri buildArrivalUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
-
-
     }
 
     public static final class VehicleEntry implements BaseColumns{
@@ -100,6 +101,25 @@ public class BusContract {
         public static final String PERCENTAGE = "percentage";
 
         public static Uri buildVehicleUri(long id){
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
+    public static final class FavoriteEntry implements BaseColumns {
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+
+        public static final String TABLE_NAME = "favorites";
+
+        public static final String ROUTE_ID = "route_id";
+        public static final String STOP_ID = "stop_id";
+        public static final String FAVORITE = "favorite";
+
+        public static Uri buildFavoriteUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }

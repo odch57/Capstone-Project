@@ -17,6 +17,7 @@
 package com.robsterthelobster.ucibustracker.data;
 
 import android.animation.ValueAnimator;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -30,11 +31,14 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.robsterthelobster.ucibustracker.ArrivalsFragment;
 import com.robsterthelobster.ucibustracker.R;
 import com.robsterthelobster.ucibustracker.Utility;
+import com.robsterthelobster.ucibustracker.data.db.BusContract;
+import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 
 /**
  * Created by robin
@@ -55,6 +59,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         private int originalHeight = 0;
         private int expandingHeight = 0;
         private boolean isViewExpanded = false;
+        private boolean isChecked = false;
 
         private final TextView routeView;
         private final TextView timeView;
@@ -65,7 +70,6 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
 
         public ViewHolder(View v) {
             super(v);
-
             routeView = (TextView) v.findViewById(R.id.prediction_route_name);
             timeView = (TextView) v.findViewById(R.id.prediction_arrival_time);
             timeViewAlt = (TextView) v.findViewById(R.id.prediction_arrival_time_alt);
@@ -110,9 +114,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
                 // Set a listener to the animation and configure onAnimationEnd
                 a.setAnimationListener(new Animation.AnimationListener() {
                     @Override
-                    public void onAnimationStart(Animation animation) {
-
-                    }
+                    public void onAnimationStart(Animation animation) {}
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
@@ -121,9 +123,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
                     }
 
                     @Override
-                    public void onAnimationRepeat(Animation animation) {
-
-                    }
+                    public void onAnimationRepeat(Animation animation) {}
                 });
                 timeViewAlt.startAnimation(a);
             }
@@ -163,6 +163,14 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
             return stopView;
         }
 
+        public void setCheckBox(boolean checked){
+            isChecked = checked;
+        }
+
+        public boolean getIsChecked(){
+            return isChecked;
+        }
+
     }
 
     @Override
@@ -179,20 +187,57 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder viewHolder, Cursor cursor) {
-        String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
-        String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
+    public void onBindViewHolder(final ViewHolder viewHolder, Cursor cursor) {
+        final int routeID = cursor.getInt(ArrivalsFragment.C_ROUTE_ID);
+        final int stopID = cursor.getInt(ArrivalsFragment.C_STOP_ID);
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
+        int minutesAlt = cursor.getInt(ArrivalsFragment.C_MIN_ALT);
         double seconds = cursor.getDouble(ArrivalsFragment.C_SECONDS);
-        String arrivalTime = Utility.getArrivalTime(minutes, seconds);
+        int isChecked = cursor.getInt(ArrivalsFragment.C_FAVORITE);
+        
+        final String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
+        String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
         String color = cursor.getString(ArrivalsFragment.C_COLOR);
+        String arrivalTime = Utility.getArrivalTime(minutes, seconds);
+        String altArrivalTime = Utility.getArrivalTime(minutesAlt);
 
-        viewHolder.getButtonView().setOnCheckedChangeListener(null);
+        CheckBox checkBox = viewHolder.getButtonView();
+        if(isChecked == 1){
+            checkBox.setChecked(true);
+        }else{
+            checkBox.setChecked(false);
+        }
+
+//        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//
+//                ContentValues contentValues = new ContentValues();
+//                String where = BusContract.FavoriteEntry.ROUTE_ID + " =? " + " AND " +
+//                        BusContract.FavoriteEntry.STOP_ID + " =? ";
+//                String[] args = new String[] {String.valueOf(routeID), String.valueOf(stopID)};
+//
+//                if(isChecked){
+//                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 1);
+//                }else{
+//                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
+//                }
+//
+//                if(contentValues.size() > 0){
+//                    mContext.getContentResolver().update(
+//                            BusContract.FavoriteEntry.CONTENT_URI,
+//                            contentValues,
+//                            where,
+//                            args
+//                    );
+//                }
+//            }
+//        });
 
         viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
         viewHolder.getTimeView().setText(arrivalTime);
-        viewHolder.getTimeViewAlt().setText(arrivalTime);
+        viewHolder.getTimeViewAlt().setText(altArrivalTime);
         viewHolder.getStopView().setText(stopName);
     }
 }

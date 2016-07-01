@@ -3,7 +3,6 @@ package com.robsterthelobster.ucibustracker;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 /**
  * Created by robin on 6/28/2016.
@@ -20,7 +19,7 @@ public class Utility {
 
     public static String getArrivalTime(int minutes, double seconds){
         if(seconds > 60){
-            return minutes + "min";
+            return getArrivalTime(minutes);
         }else if(seconds > 0){
             return "<1 min";
         }else{
@@ -28,4 +27,12 @@ public class Utility {
         }
     }
 
+    public static String getArrivalTime(int minutes){
+        // minutes passed from (minutes, seconds) won't be 0
+        // if 0, it means there's no more arrivals
+        if(minutes == 0){
+            return "LAST";
+        }
+        return minutes + " min";
+    }
 }

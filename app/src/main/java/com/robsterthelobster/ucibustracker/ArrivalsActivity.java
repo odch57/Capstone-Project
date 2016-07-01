@@ -153,7 +153,7 @@ public class ArrivalsActivity extends AppCompatActivity
                     Log.d(TAG, "retrofit routeCall : success");
                     Vector<ContentValues> cVVector = new Vector<ContentValues>(routes.size());
                     for(Route route : routes){
-                        Log.d(TAG, "route name: " + route.getName());
+                        //Log.d(TAG, "route name: " + route.getName());
                         ContentValues routeValues = new ContentValues();
 
                         int routeID = route.getId();
@@ -197,26 +197,36 @@ public class ArrivalsActivity extends AppCompatActivity
                         null, null);
                 List<Stop> stops = response.body();
                 if(stops != null){
-                    Vector<ContentValues> cVVector = new Vector<ContentValues>(stops.size());
+                    Log.d(TAG, "retrofit stopsCall : success");
+                    Vector<ContentValues> stopVector = new Vector<>(stops.size());
+                    Vector<ContentValues> fVector = new Vector<>(stops.size());
                     for(Stop stop : stops){
-                        Log.d(TAG, "Stop : " + stop.getName());
+                        //Log.d(TAG, "Stop : " + stop.getName());
                         ContentValues stopValues = new ContentValues();
-
+                        ContentValues favoriteValues = new ContentValues();
                         int stopID = stop.getId();
-
                         stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
                         stopValues.put(BusContract.StopEntry.STOP_NAME, stop.getName());
                         stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
                         stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
 
-                        cVVector.add(stopValues);
+                        favoriteValues.put(BusContract.FavoriteEntry.ROUTE_ID, routeID);
+                        favoriteValues.put(BusContract.FavoriteEntry.STOP_ID, stopID);
+                        favoriteValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
+
+                        stopVector.add(stopValues);
+                        fVector.add(favoriteValues);
 
                         callArrivals(routeID, stopID);
                     }
-                    if ( cVVector.size() > 0 ) {
-                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                        cVVector.toArray(cvArray);
+                    if ( stopVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[stopVector.size()];
+                        stopVector.toArray(cvArray);
                         getContentResolver().bulkInsert(BusContract.StopEntry.CONTENT_URI, cvArray);
+
+                        ContentValues[] fArray = new ContentValues[fVector.size()];
+                        fVector.toArray(fArray);
+                        getContentResolver().bulkInsert(BusContract.FavoriteEntry.CONTENT_URI, fArray);
                     }
                 }
             }
@@ -237,35 +247,43 @@ public class ArrivalsActivity extends AppCompatActivity
                 Arrivals arrivals = response.body();
 
                 if(arrivals != null){
+                    Log.d(TAG, "retrofit arrivalsCall : success");
                     List<Prediction> predictions = arrivals.getPredictions();
                     String predictionTime = arrivals.getPredictionTime();
 
-                    int count = 0;
-                    Vector<ContentValues> cVVector = new Vector<ContentValues>(predictions.size());
-                    for(Prediction prediction : predictions){
-                        Log.d(TAG, "Prediction : " + prediction.getArriveTime());
-                        ContentValues arrivalValues = new ContentValues();
+                    int size = predictions.size();
+                    ContentValues arrivalValues = new ContentValues();
 
-                        arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
-                        arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
-                        arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
-                        arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
-                        arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
-                        arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
-                        arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
+                    for(int i = 0; i < size; i++){
+                        Prediction prediction = predictions.get(i);
+                        //Log.d(TAG, "Prediction : " + prediction.getArriveTime());
 
-                        cVVector.add(arrivalValues);
-
-                        // i only want the first two predictions
-                        count++;
-                        if(count == 2){
-                            break;
+                        switch (i){
+                            case 0:
+                                // primary + main prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
+                                arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
+                                arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
+                                arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
+                                arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
+                                arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
+                                arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
+                                break;
+                            case 1:
+                                // get the second prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT, prediction.getMinutes());
+                                break;
+                            case 2:
+                                // get the third prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT_2, prediction.getMinutes());
+                                break;
+                            default:
+                                // do nothing
+                                Log.d(TAG, "additional predictions beyond 2");
                         }
                     }
-                    if ( cVVector.size() > 0 ) {
-                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                        cVVector.toArray(cvArray);
-                        getContentResolver().bulkInsert(BusContract.ArrivalEntry.CONTENT_URI, cvArray);
+                    if(arrivalValues.size() > 0) {
+                        getContentResolver().insert(BusContract.ArrivalEntry.CONTENT_URI, arrivalValues);
                     }
                     callVehicles(routeID);
                 }

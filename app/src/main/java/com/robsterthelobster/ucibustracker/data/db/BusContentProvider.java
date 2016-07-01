@@ -21,6 +21,7 @@ public class BusContentProvider extends ContentProvider {
     private static final int ARRIVALS_ROUTE_STOP = 301;
     private static final int VEHICLES = 400;
     private static final int VEHICLES_ROUTE = 401;
+    private static final int FAVORITES = 500;
 
     private static final SQLiteQueryBuilder arrivalsRouteStopBuilder;
 
@@ -45,7 +46,17 @@ public class BusContentProvider extends ContentProvider {
                         " ON " + BusContract.ArrivalEntry.TABLE_NAME +
                         "." + BusContract.ArrivalEntry.STOP_ID +
                         " = " + BusContract.StopEntry.TABLE_NAME +
-                        "." + BusContract.StopEntry.STOP_ID);
+                        "." + BusContract.StopEntry.STOP_ID +
+                        " INNER JOIN " +
+                        BusContract.FavoriteEntry.TABLE_NAME +
+                        " ON " + BusContract.RouteEntry.TABLE_NAME +
+                        "." + BusContract.RouteEntry.ROUTE_ID +
+                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
+                        "." + BusContract.FavoriteEntry.ROUTE_ID +
+                        " AND " + BusContract.StopEntry.TABLE_NAME +
+                        "." + BusContract.StopEntry.STOP_ID +
+                        " = " + BusContract.FavoriteEntry.TABLE_NAME +
+                        "." + BusContract.FavoriteEntry.STOP_ID);
     }
 
     static UriMatcher buildUriMatcher() {
@@ -57,6 +68,7 @@ public class BusContentProvider extends ContentProvider {
         matcher.addURI(authority, BusContract.PATH_STOPS, STOPS);
         matcher.addURI(authority, BusContract.PATH_ARRIVALS, ARRIVALS);
         matcher.addURI(authority, BusContract.PATH_VEHICLES, VEHICLES);
+        matcher.addURI(authority, BusContract.PATH_FAVORITE, FAVORITES);
 
         matcher.addURI(authority, BusContract.PATH_ARRIVALS + "/*/*", ARRIVALS_ROUTE_STOP);
         matcher.addURI(authority, BusContract.PATH_VEHICLES + "/*", VEHICLES_ROUTE);
@@ -95,6 +107,10 @@ public class BusContentProvider extends ContentProvider {
                 rowsDeleted =
                         db.delete(BusContract.VehicleEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case FAVORITES:
+                rowsDeleted =
+                        db.delete(BusContract.FavoriteEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -121,6 +137,8 @@ public class BusContentProvider extends ContentProvider {
                 return BusContract.VehicleEntry.CONTENT_TYPE;
             case VEHICLES_ROUTE:
                 return BusContract.VehicleEntry.CONTENT_TYPE;
+            case FAVORITES:
+                return BusContract.FavoriteEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -159,6 +177,13 @@ public class BusContentProvider extends ContentProvider {
                 _id = db.insert(BusContract.VehicleEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
                     returnUri = BusContract.VehicleEntry.buildVehicleUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            case FAVORITES:
+                _id = db.insert(BusContract.FavoriteEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = BusContract.FavoriteEntry.buildFavoriteUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
@@ -215,6 +240,11 @@ public class BusContentProvider extends ContentProvider {
                         BusContract.VehicleEntry.TABLE_NAME, projection,
                         selection, selectionArgs, null, null, sortOrder);
                 break;
+            case FAVORITES:
+                retCurosr = db.query(
+                        BusContract.FavoriteEntry.TABLE_NAME, projection,
+                        selection, selectionArgs, null, null, sortOrder);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -246,6 +276,10 @@ public class BusContentProvider extends ContentProvider {
                 rowsUpdated = db.update(BusContract.VehicleEntry.TABLE_NAME,
                         values, selection, selectionArgs);
                 break;
+            case FAVORITES:
+                rowsUpdated = db.update(BusContract.FavoriteEntry.TABLE_NAME,
+                        values, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -275,6 +309,10 @@ public class BusContentProvider extends ContentProvider {
                 break;
             case VEHICLES:
                 returnCount = bulkInsert(BusContract.VehicleEntry.TABLE_NAME, values);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+            case FAVORITES:
+                returnCount = bulkInsert(BusContract.FavoriteEntry.TABLE_NAME, values);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             default:
