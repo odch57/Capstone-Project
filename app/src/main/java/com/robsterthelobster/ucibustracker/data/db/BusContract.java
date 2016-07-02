@@ -104,6 +104,7 @@ public class BusContract {
         public static final String LONGITUDE = "longitude";
         public static final String LATITUDE = "latitude";
         public static final String PERCENTAGE = "percentage";
+        public static final String DIRECTION = "direction";
 
         public static Uri buildVehicleUri(long id){
             return ContentUris.withAppendedId(CONTENT_URI, id);

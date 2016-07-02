@@ -1,7 +1,6 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -12,8 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-
-import com.google.android.gms.maps.SupportMapFragment;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -91,6 +88,7 @@ public class DetailActivity extends AppCompatActivity {
 
                     MapFragment mapFragment = new MapFragment();
                     mapFragment.setArguments(bundle);
+
                     return mapFragment;
                 default:
                     Log.e(TAG, "Pager position does not exist");

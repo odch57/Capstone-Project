@@ -317,6 +317,7 @@ public class ArrivalsActivity extends AppCompatActivity
                         vehicleValues.put(BusContract.VehicleEntry.LATITUDE, vehicle.getLatitude());
                         vehicleValues.put(BusContract.VehicleEntry.LONGITUDE, vehicle.getLongitude());
                         vehicleValues.put(BusContract.VehicleEntry.PERCENTAGE, vehicle.getApcPercentage());
+                        vehicleValues.put(BusContract.VehicleEntry.DIRECTION, vehicle.getHeading());
 
                         cVVector.add(vehicleValues);
                     }

@@ -63,7 +63,8 @@ public class BusDbHelper extends SQLiteOpenHelper{
                     BusContract.VehicleEntry.BUS_NAME + " TEXT PRIMARY KEY, " +
                     BusContract.VehicleEntry.LATITUDE + " REAL NOT NULL, " +
                     BusContract.VehicleEntry.LONGITUDE + " REAL NOT NULL, " +
-                    BusContract.VehicleEntry.PERCENTAGE + " INTEGER NOT NULL " +
+                    BusContract.VehicleEntry.PERCENTAGE + " INTEGER NOT NULL, " +
+                    BusContract.VehicleEntry.DIRECTION + " TEXT NOT NULL " +
                     " );";
 
     final String SQL_CREATE_FAVORITE_TABLE =

@@ -104,7 +104,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
     }
 
     @Override

@@ -366,8 +366,7 @@ public class BusContentProvider extends ContentProvider {
                 selectionArgs,
                 null,
                 null,
-                sortOrder
-        );
+                sortOrder);
         return retCursor;
     }
 }

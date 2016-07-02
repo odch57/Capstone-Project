@@ -8,8 +8,11 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
@@ -18,6 +21,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -68,18 +72,23 @@ public class MapFragment extends SupportMapFragment
             BusContract.VehicleEntry.BUS_NAME,
             BusContract.VehicleEntry.LATITUDE,
             BusContract.VehicleEntry.LONGITUDE,
-            BusContract.VehicleEntry.PERCENTAGE
+            BusContract.VehicleEntry.PERCENTAGE,
+            BusContract.VehicleEntry.DIRECTION
     };
     public static final int C_ROUTE_ID = 0;
     public static final int C_BUS_NAME = 1;
     public static final int C_BUS_LAT = 2;
     public static final int C_BUS_LONG = 3;
     public static final int C_PERCENTAGE = 4;
+    public static final int C_DIRECTION = 5;
 
     private GoogleMap mMap;
     private String routeID = "";
     private List<Marker> stopMarkers;
     private List<Marker> vehicleMarkers;
+
+    private Snackbar snackbar;
+    private SnackbarManager snackbarManager;
 
     public MapFragment() {
         getMapAsync(this);
@@ -101,6 +110,12 @@ public class MapFragment extends SupportMapFragment
                              Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
 
+        snackbar = Snackbar.make(container.getRootView().findViewById(R.id.detail_coordinator),
+                "Snackbar test", Snackbar.LENGTH_INDEFINITE);
+        View snackView = snackbar.getView();
+        TextView textView = (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.YELLOW);
+        showSnackbar();
         return view;
     }
 
@@ -109,6 +124,13 @@ public class MapFragment extends SupportMapFragment
         getLoaderManager().initLoader(STOP_LOADER, null, this);
         getLoaderManager().initLoader(VEHICLE_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (snackbarManager != null)
+            snackbarManager.onSetUserVisibleHint(isVisibleToUser);
     }
 
     @Override
@@ -159,7 +181,6 @@ public class MapFragment extends SupportMapFragment
                     stopMarkers.add(mMap.addMarker(new MarkerOptions()
                             .icon(getBitmapDescriptor(R.drawable.ic_directions_bus_24dp,
                                     Color.parseColor(color)))
-                            //.icon(getBitmapDescriptor(R.drawable.bus_tracker, color))
                             .position(latLng).title(stopName)));
                 }
                 centerMapToMarkers(200);
@@ -172,11 +193,13 @@ public class MapFragment extends SupportMapFragment
                     double longitude = data.getDouble(C_BUS_LONG);
                     String busName = "Bus " + data.getString(C_BUS_NAME);
                     String percentage = "Percent full: " + data.getInt(C_PERCENTAGE) + "%";
+                    String direction = "Heading " + data.getString(C_DIRECTION);
 
                     LatLng latLng = new LatLng(latitude, longitude);
                     vehicleMarkers.add(mMap.addMarker(new MarkerOptions()
-                            .icon(getBitmapDescriptor(R.drawable.bus_tracker, R.color.colorPrimary))
-                            .position(latLng).title(busName).snippet(percentage)));
+                            .icon(getBitmapDescriptor(R.drawable.bus_tracker,
+                                    ContextCompat.getColor(getContext(), R.color.colorPrimary)))
+                            .position(latLng).title(busName).snippet(direction)));
                 }
                 break;
             default:
@@ -192,6 +215,9 @@ public class MapFragment extends SupportMapFragment
     // http://stackoverflow.com/questions/14828217/
     // android-map-v2-zoom-to-show-all-the-markers
     private void centerMapToMarkers(int padding){
+        if(stopMarkers.size() == 0){
+            return;
+        }
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (Marker marker : stopMarkers) {
             builder.include(marker.getPosition());
@@ -255,5 +281,21 @@ public class MapFragment extends SupportMapFragment
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
+    }
+
+    public void showSnackbar() {
+        snackbarManager = new SnackbarManager(new SnackbarManager.Create() {
+            @Override
+            public Snackbar create() {
+                snackbar.setAction("Create", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        snackbarManager = null;
+                    }
+                });
+                return snackbar;
+            }
+        });
+        snackbarManager.show(this);
     }
 }
