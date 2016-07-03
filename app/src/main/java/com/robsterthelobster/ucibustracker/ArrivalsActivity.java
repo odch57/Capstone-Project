@@ -302,6 +302,8 @@ public class ArrivalsActivity extends AppCompatActivity
     }
 
     private void callVehicles(int routeID){
+        getContentResolver().delete(BusContract.VehicleEntry.CONTENT_URI, null, null);
+
         Call<List<Vehicle>> vehiclesCall = apiService.getVehicles(routeID);
         vehiclesCall.enqueue(new Callback<List<Vehicle>>() {
             @Override

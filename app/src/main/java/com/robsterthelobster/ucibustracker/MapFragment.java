@@ -39,6 +39,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -50,10 +51,11 @@ public class MapFragment extends SupportMapFragment
         GoogleMap.OnMarkerClickListener{
 
     private final String TAG = MapFragment.class.getSimpleName();
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     private final int STOP_LOADER = 0;
     private final int VEHICLE_LOADER = 1;
+    private final int ARRIVAL_LOADER = 2;
 
     private final String[] STOP_COLUMNS = {
             BusContract.StopEntry.STOP_ID,
@@ -62,11 +64,11 @@ public class MapFragment extends SupportMapFragment
             BusContract.StopEntry.LONGITUDE,
             BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR
     };
-    public static final int C_STOP_ID = 0;
-    public static final int C_STOP_NAME = 1;
-    public static final int C_STOP_LAT = 2;
-    public static final int C_STOP_LONG = 3;
-    public static final int C_COLOR = 4;
+    public final int C_STOP_ID = 0;
+    public final int C_STOP_NAME = 1;
+    public final int C_STOP_LAT = 2;
+    public final int C_STOP_LONG = 3;
+    public final int C_COLOR = 4;
 
     private final String[] VEHICLE_COLUMNS = {
             BusContract.VehicleEntry.ROUTE_ID,
@@ -76,12 +78,23 @@ public class MapFragment extends SupportMapFragment
             BusContract.VehicleEntry.PERCENTAGE,
             BusContract.VehicleEntry.DIRECTION
     };
-    public static final int C_ROUTE_ID = 0;
-    public static final int C_BUS_NAME = 1;
-    public static final int C_BUS_LAT = 2;
-    public static final int C_BUS_LONG = 3;
-    public static final int C_PERCENTAGE = 4;
-    public static final int C_DIRECTION = 5;
+    public final int C_ROUTE_ID = 0;
+    public final int C_BUS_NAME = 1;
+    public final int C_BUS_LAT = 2;
+    public final int C_BUS_LONG = 3;
+    public final int C_PERCENTAGE = 4;
+    public final int C_DIRECTION = 5;
+
+    private final String[] ARRIVAL_COLUMNS = {
+            BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_NAME,
+            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
+            BusContract.ArrivalEntry.MINUTES,
+            BusContract.ArrivalEntry.MIN_ALT,
+    };
+    public final int C_ARRIVAL_ROUTE_NAME = 0;
+    public final int C_ARRIVAL_SECONDS = 1;
+    public final int C_ARRIVAL_MIN = 2;
+    public final int C_ARRIVAL_MIN_ALT = 3;
 
     private GoogleMap mMap;
     private String routeID = "";
@@ -91,6 +104,8 @@ public class MapFragment extends SupportMapFragment
     private Snackbar snackbar;
     private SnackbarManager snackbarManager;
     private CoordinatorLayout snackbarLayout;
+    private HashMap<String, String> stopArrivalTimes;
+    private boolean noTimesAvailable = false;
 
     public MapFragment() {
         getMapAsync(this);
@@ -105,6 +120,7 @@ public class MapFragment extends SupportMapFragment
         }
         stopMarkers = new ArrayList<>();
         vehicleMarkers = new ArrayList<>();
+        stopArrivalTimes = new HashMap<>();
     }
 
     @Override
@@ -121,6 +137,7 @@ public class MapFragment extends SupportMapFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(STOP_LOADER, null, this);
         getLoaderManager().initLoader(VEHICLE_LOADER, null, this);
+        getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -158,6 +175,15 @@ public class MapFragment extends SupportMapFragment
                         VEHICLE_COLUMNS,
                         null,
                         null,
+                        null);
+            case ARRIVAL_LOADER:
+                return new CursorLoader(getContext(),
+                        BusContract.ArrivalEntry.CONTENT_URI,
+                        ARRIVAL_COLUMNS,
+                        BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
+                                " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
+                                BusContract.ArrivalEntry.ROUTE_ID + " = ?",
+                        new String[]{"1", routeID},
                         null);
             default:
                 Log.d(TAG, "No such id for loader");
@@ -199,6 +225,26 @@ public class MapFragment extends SupportMapFragment
                             .icon(getBitmapDescriptor(R.drawable.bus_tracker,
                                     ContextCompat.getColor(getContext(), R.color.colorPrimary)))
                             .position(latLng).title(busName).snippet(direction)));
+                }
+                break;
+            case ARRIVAL_LOADER:
+                if(data.getCount() == 0){
+                    noTimesAvailable = true;
+                }
+                else{
+                    while(data.moveToNext()){
+                        String routeName = data.getString(C_ARRIVAL_ROUTE_NAME);
+                        int minutes = data.getInt(C_ARRIVAL_MIN);
+                        int minutesAlt = data.getInt(C_ARRIVAL_MIN_ALT);
+                        double seconds = data.getDouble(C_ARRIVAL_SECONDS);
+
+                        // TODO UTILITY STRINGS.XML
+                        String arrivalTime = Utility.getArrivalTime(minutes, seconds);
+                        String altArrivalTime = Utility.getArrivalTime(minutesAlt);
+                        String text = arrivalTime + "\n" + altArrivalTime;
+                        stopArrivalTimes.put(routeName, text);
+                    }
+                    noTimesAvailable = false;
                 }
                 break;
             default:
@@ -282,16 +328,16 @@ public class MapFragment extends SupportMapFragment
         return false;
     }
 
-    public void showSnackbar() {
+    public void showSnackbar(final String str) {
         snackbarManager = new SnackbarManager(new SnackbarManager.Create() {
             @Override
             public Snackbar create() {
                 snackbar =
-                        Snackbar.make(snackbarLayout, "Snackbar test", Snackbar.LENGTH_INDEFINITE);
+                        Snackbar.make(snackbarLayout, str, Snackbar.LENGTH_INDEFINITE);
                 View snackView = snackbar.getView();
                 TextView textView =
                         (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
-                textView.setTextColor(Color.YELLOW);
+                textView.setTextColor(Color.WHITE);
                 snackbar.setAction("Dismiss", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -306,7 +352,12 @@ public class MapFragment extends SupportMapFragment
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        showSnackbar();
+        if(noTimesAvailable){
+            // TODO strings.xml
+            showSnackbar("Arrival predictions are not available at this time.");
+        }else if(stopArrivalTimes != null){
+            showSnackbar(stopArrivalTimes.get(marker.getTitle()));
+        }
         return false;
     }
 }
