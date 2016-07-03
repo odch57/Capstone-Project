@@ -48,6 +48,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     private static final String TAG = "PredictionAdapter";
 
     private static Context mContext;
+    private boolean[] checks;
 
     public PredictionAdapter(Context context, Cursor cursor) {
         super(context, cursor);
@@ -187,13 +188,13 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder viewHolder, Cursor cursor) {
+    public void onBindViewHolder(final ViewHolder viewHolder, final Cursor cursor) {
         final int routeID = cursor.getInt(ArrivalsFragment.C_ROUTE_ID);
         final int stopID = cursor.getInt(ArrivalsFragment.C_STOP_ID);
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
         int minutesAlt = cursor.getInt(ArrivalsFragment.C_MIN_ALT);
         double seconds = cursor.getDouble(ArrivalsFragment.C_SECONDS);
-        //int isChecked = cursor.getInt(ArrivalsFragment.C_FAVORITE);
+        int isFavorited = cursor.getInt(ArrivalsFragment.C_FAVORITE);
         
         final String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
@@ -201,42 +202,54 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
         String altArrivalTime = Utility.getArrivalTime(minutesAlt);
 
-//        CheckBox checkBox = viewHolder.getButtonView();
-//        if(isChecked == 1){
-//            checkBox.setChecked(true);
-//        }else{
-//            checkBox.setChecked(false);
-//        }
-//        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//
-//                ContentValues contentValues = new ContentValues();
-//                String where = BusContract.FavoriteEntry.ROUTE_ID + " =? " + " AND " +
-//                        BusContract.FavoriteEntry.STOP_ID + " =? ";
-//                String[] args = new String[] {String.valueOf(routeID), String.valueOf(stopID)};
-//
-//                if(isChecked){
-//                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 1);
-//                }else{
-//                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
-//                }
-//
-//                if(contentValues.size() > 0){
-//                    mContext.getContentResolver().update(
-//                            BusContract.FavoriteEntry.CONTENT_URI,
-//                            contentValues,
-//                            where,
-//                            args
-//                    );
-//                }
-//            }
-//        });
+        final int position = cursor.getPosition();
+
+        final CheckBox checkBox = viewHolder.getButtonView();
+        checkBox.setOnCheckedChangeListener(null);
+        if(isFavorited == 1 || checks[position]){
+            checkBox.setChecked(true);
+        }else{
+            checkBox.setChecked(false);
+        }
+
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                ContentValues contentValues = new ContentValues();
+                String where = BusContract.FavoriteEntry.ROUTE_ID + " =? " + " AND " +
+                        BusContract.FavoriteEntry.STOP_ID + " =? ";
+                String[] args = new String[] {String.valueOf(routeID), String.valueOf(stopID)};
+
+                if(isChecked){
+                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 1);
+                    checks[position] = true;
+                }else{
+                    contentValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
+                    checks[position] = false;
+                }
+
+                if(contentValues.size() > 0){
+                    mContext.getContentResolver().update(
+                            BusContract.FavoriteEntry.CONTENT_URI,
+                            contentValues,
+                            where,
+                            args
+                    );
+                }
+            }
+        });
 
         viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
         viewHolder.getTimeView().setText(arrivalTime);
         viewHolder.getTimeViewAlt().setText(altArrivalTime);
         viewHolder.getStopView().setText(stopName);
+    }
+
+    @Override
+    public Cursor swapCursor(Cursor cursor){
+        checks = new boolean[cursor.getCount()];
+        Cursor retCursor = super.swapCursor(cursor);
+        return retCursor;
     }
 }

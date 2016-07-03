@@ -312,23 +312,28 @@ public class BusContentProvider extends ContentProvider {
 
         switch (match) {
             case ROUTES:
-                returnCount = bulkInsert(BusContract.RouteEntry.TABLE_NAME, values);
+                returnCount = bulkInsert(BusContract.RouteEntry.TABLE_NAME,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             case STOPS:
-                returnCount = bulkInsert(BusContract.StopEntry.TABLE_NAME, values);
+                returnCount = bulkInsert(BusContract.StopEntry.TABLE_NAME,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             case ARRIVALS:
-                returnCount = bulkInsert(BusContract.ArrivalEntry.TABLE_NAME, values);
+                returnCount = bulkInsert(BusContract.ArrivalEntry.TABLE_NAME,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             case VEHICLES:
-                returnCount = bulkInsert(BusContract.VehicleEntry.TABLE_NAME, values);
+                returnCount = bulkInsert(BusContract.VehicleEntry.TABLE_NAME,
+                        values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             case FAVORITES:
-                returnCount = bulkInsert(BusContract.FavoriteEntry.TABLE_NAME, values);
+                returnCount = bulkInsert(BusContract.FavoriteEntry.TABLE_NAME,
+                        values, SQLiteDatabase.CONFLICT_IGNORE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             default:
@@ -337,13 +342,13 @@ public class BusContentProvider extends ContentProvider {
         return returnCount;
     }
 
-    private int bulkInsert(String tableName, ContentValues[] values){
+    private int bulkInsert(String tableName, ContentValues[] values, int conflictCode){
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int returnCount = 0;
         db.beginTransaction();
         try {
             for (ContentValues value : values) {
-                long _id = db.insertWithOnConflict(tableName, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                long _id = db.insertWithOnConflict(tableName, null, value, conflictCode);
                 if (_id != -1) {
                     returnCount++;
                 }

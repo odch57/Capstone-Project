@@ -46,7 +46,8 @@ import java.util.List;
  */
 public class MapFragment extends SupportMapFragment
         implements OnMapReadyCallback, LoaderManager.LoaderCallbacks<Cursor>,
-        GoogleMap.OnMyLocationButtonClickListener {
+        GoogleMap.OnMyLocationButtonClickListener,
+        GoogleMap.OnMarkerClickListener{
 
     private final String TAG = MapFragment.class.getSimpleName();
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -89,6 +90,7 @@ public class MapFragment extends SupportMapFragment
 
     private Snackbar snackbar;
     private SnackbarManager snackbarManager;
+    private CoordinatorLayout snackbarLayout;
 
     public MapFragment() {
         getMapAsync(this);
@@ -109,13 +111,9 @@ public class MapFragment extends SupportMapFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
+        snackbarLayout =
+                (CoordinatorLayout) container.getRootView().findViewById(R.id.detail_coordinator);
 
-        snackbar = Snackbar.make(container.getRootView().findViewById(R.id.detail_coordinator),
-                "Snackbar test", Snackbar.LENGTH_INDEFINITE);
-        View snackView = snackbar.getView();
-        TextView textView = (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
-        textView.setTextColor(Color.YELLOW);
-        showSnackbar();
         return view;
     }
 
@@ -137,6 +135,7 @@ public class MapFragment extends SupportMapFragment
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        mMap.setOnMarkerClickListener(this);
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
     }
@@ -287,7 +286,13 @@ public class MapFragment extends SupportMapFragment
         snackbarManager = new SnackbarManager(new SnackbarManager.Create() {
             @Override
             public Snackbar create() {
-                snackbar.setAction("Create", new View.OnClickListener() {
+                snackbar =
+                        Snackbar.make(snackbarLayout, "Snackbar test", Snackbar.LENGTH_INDEFINITE);
+                View snackView = snackbar.getView();
+                TextView textView =
+                        (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
+                textView.setTextColor(Color.YELLOW);
+                snackbar.setAction("Dismiss", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         snackbarManager = null;
@@ -297,5 +302,11 @@ public class MapFragment extends SupportMapFragment
             }
         });
         snackbarManager.show(this);
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        showSnackbar();
+        return false;
     }
 }
