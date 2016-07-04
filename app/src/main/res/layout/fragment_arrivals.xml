@@ -32,6 +32,6 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:visibility="gone"
-        android:text="Empty View" />
+        android:text="@string/arrivals_empty_view_message" />
 
 </RelativeLayout>

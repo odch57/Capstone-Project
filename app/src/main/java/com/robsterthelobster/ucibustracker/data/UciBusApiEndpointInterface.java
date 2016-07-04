@@ -13,6 +13,7 @@ import retrofit2.http.Path;
 
 /**
  * Created by robin on 6/21/2016.
+ * Retrofit interface
  */
 public interface UciBusApiEndpointInterface {
     @GET("Region/0/Routes")

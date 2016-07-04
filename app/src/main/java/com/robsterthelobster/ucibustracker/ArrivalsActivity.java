@@ -152,7 +152,7 @@ public class ArrivalsActivity extends AppCompatActivity
                 if(routes != null){
                     Log.d(TAG, "retrofit routeCall : success");
 
-                    Vector<ContentValues> cVVector = new Vector<ContentValues>(routes.size());
+                    Vector<ContentValues> cVVector = new Vector<>(routes.size());
                     for(Route route : routes){
                         //Log.d(TAG, "route name: " + route.getName());
                         ContentValues routeValues = new ContentValues();

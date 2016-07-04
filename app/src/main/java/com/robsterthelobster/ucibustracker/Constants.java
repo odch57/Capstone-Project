@@ -2,6 +2,7 @@ package com.robsterthelobster.ucibustracker;
 
 /**
  * Created by robin on 6/29/2016.
+ * Constant variables
  */
 public class Constants {
 

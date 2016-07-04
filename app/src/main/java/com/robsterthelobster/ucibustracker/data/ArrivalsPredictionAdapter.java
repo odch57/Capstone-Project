@@ -21,7 +21,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,19 +37,19 @@ import com.robsterthelobster.ucibustracker.ArrivalsFragment;
 import com.robsterthelobster.ucibustracker.R;
 import com.robsterthelobster.ucibustracker.Utility;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
-import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 
 /**
  * Created by robin
  * https://gist.github.com/ZkHaider/9bf0e1d7b8a2736fd676
  */
-public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapter.ViewHolder> {
-    private static final String TAG = "PredictionAdapter";
+public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<ArrivalsPredictionAdapter.ViewHolder> {
+    private static final String TAG = ArrivalsPredictionAdapter.class.getSimpleName();
 
     private static Context mContext;
     private boolean[] checks;
+    private boolean checkOverride = false; // to use favorite variable or checks
 
-    public PredictionAdapter(Context context, Cursor cursor) {
+    public ArrivalsPredictionAdapter(Context context, Cursor cursor) {
         super(context, cursor);
         mContext = context;
     }
@@ -60,7 +59,6 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         private int originalHeight = 0;
         private int expandingHeight = 0;
         private boolean isViewExpanded = false;
-        private boolean isChecked = false;
 
         private final TextView routeView;
         private final TextView timeView;
@@ -132,8 +130,7 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
             valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    Integer value = (Integer) animation.getAnimatedValue();
-                    view.getLayoutParams().height = value;
+                    view.getLayoutParams().height = (Integer) animation.getAnimatedValue();
                     view.requestLayout();
                 }
             });
@@ -163,15 +160,6 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
         public TextView getStopView() {
             return stopView;
         }
-
-        public void setCheckBox(boolean checked){
-            isChecked = checked;
-        }
-
-        public boolean getIsChecked(){
-            return isChecked;
-        }
-
     }
 
     @Override
@@ -206,11 +194,11 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
 
         final CheckBox checkBox = viewHolder.getButtonView();
         checkBox.setOnCheckedChangeListener(null);
-        if(isFavorited == 1 || checks[position]){
-            checkBox.setChecked(true);
-        }else{
-            checkBox.setChecked(false);
+
+        if(isFavorited == 1 && !checkOverride){
+            checks[position] = true;
         }
+        checkBox.setChecked(checks[position]);
 
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -220,12 +208,13 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
                         BusContract.FavoriteEntry.STOP_ID + " =? ";
                 String[] args = new String[] {String.valueOf(routeID), String.valueOf(stopID)};
 
+                checkOverride = true;
+                checks[position] = isChecked;
+
                 if(isChecked){
                     contentValues.put(BusContract.FavoriteEntry.FAVORITE, 1);
-                    checks[position] = true;
                 }else{
                     contentValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
-                    checks[position] = false;
                 }
 
                 if(contentValues.size() > 0){
@@ -249,7 +238,6 @@ public class PredictionAdapter extends CursorRecyclerViewAdapter<PredictionAdapt
     @Override
     public Cursor swapCursor(Cursor cursor){
         checks = new boolean[cursor.getCount()];
-        Cursor retCursor = super.swapCursor(cursor);
-        return retCursor;
+        return super.swapCursor(cursor);
     }
 }

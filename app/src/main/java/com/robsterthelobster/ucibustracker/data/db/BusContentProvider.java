@@ -8,8 +8,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.robsterthelobster.ucibustracker.data.models.Route;
-
 public class BusContentProvider extends ContentProvider {
 
     private BusDbHelper mDbHelper;

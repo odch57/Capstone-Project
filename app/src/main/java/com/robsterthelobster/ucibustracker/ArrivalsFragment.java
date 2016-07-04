@@ -40,7 +40,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.robsterthelobster.ucibustracker.data.PredictionAdapter;
+import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
 public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
@@ -51,6 +51,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     private final String TAG = ArrivalsFragment.class.getSimpleName();
 
     private final int ARRIVAL_LOADER = 0;
+    private final int STOP_LOADER = 1;
     private final String[] ARRIVAL_COLUMNS = {
             BusContract.ArrivalEntry._ID,
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_ID,
@@ -77,8 +78,21 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int C_STOP_NAME = 10;
     public static final int C_FAVORITE = 11;
 
+    private final String[] STOP_COLUMNS = {
+            BusContract.StopEntry.STOP_ID,
+            BusContract.StopEntry.STOP_NAME,
+            BusContract.StopEntry.LATITUDE,
+            BusContract.StopEntry.LONGITUDE,
+            BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR
+    };
+    public final int SC_STOP_ID = 0;
+    public final int SC_STOP_NAME = 1;
+    public final int SC_STOP_LAT = 2;
+    public final int SC_STOP_LONG = 3;
+    public final int SC_COLOR = 4;
+
     protected RecyclerView mRecyclerView;
-    protected PredictionAdapter mAdapter;
+    protected ArrivalsPredictionAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
     protected TextView emptyView;
 
@@ -139,7 +153,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(getContext()));
 
-        mAdapter = new PredictionAdapter(getContext(), null);
+        mAdapter = new ArrivalsPredictionAdapter(getContext(), null);
         mRecyclerView.setAdapter(mAdapter);
 
         return rootView;
@@ -151,7 +165,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle bundle) {
+    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
         switch (id) {
             case ARRIVAL_LOADER:
                 if(hasRouteID){
@@ -171,7 +185,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                             BusContract.ArrivalEntry.CONTENT_URI,
                             ARRIVAL_COLUMNS,
                             BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                            new String[]{"0"},
+                            new String[]{"1"},
                             sortOrder);
                 }
             default:
@@ -182,14 +196,23 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        if(cursor.getCount() == 0){
-            mRecyclerView.setVisibility(View.INVISIBLE);
-            emptyView.setVisibility(View.VISIBLE);
-        }else{
-            mRecyclerView.setVisibility(View.VISIBLE);
-            emptyView.setVisibility(View.INVISIBLE);
+        int id = loader.getId();
+        switch(id){
+            case ARRIVAL_LOADER:
+                if(cursor.getCount() == 0){
+                    mRecyclerView.setVisibility(View.INVISIBLE);
+                    emptyView.setVisibility(View.VISIBLE);
+                }else{
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    emptyView.setVisibility(View.INVISIBLE);
+                }
+                mAdapter.swapCursor(cursor);
+                break;
+            case STOP_LOADER:
+                break;
+            default:
+                Log.d(TAG, "Not valid id: " + id);
         }
-        mAdapter.swapCursor(cursor);
     }
 
     @Override

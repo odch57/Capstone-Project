@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">UCIBustracker</string>
+    <string name="app_name">UCI Transit</string>
 
-    <string name="title_activity_arrivals">UCI APP TITLE</string>
+    <string name="title_activity_arrivals">Nearby Arrivals</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -13,7 +13,9 @@
     <string name="route_map_tab">Route Map</string>
     <string name="title_activity_maps">Map</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- Empty recycler view + other special case messages-->
+    <string name="arrivals_empty_view_message">Arrival predictions are not available at this time.</string>
+    <string name="not_connected_message">The network is not available to fetch arrival data.</string>
+    <string name="no_nearby_stops_message">No nearby stops</string>
 
 </resources>

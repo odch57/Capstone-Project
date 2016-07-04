@@ -157,7 +157,7 @@ public class MapFragment extends SupportMapFragment
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle args) {
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id){
             case STOP_LOADER:
                 return new CursorLoader(getContext(),
@@ -321,7 +321,7 @@ public class MapFragment extends SupportMapFragment
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(getContext(), "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getContext(), "MyLocation button clicked", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
         return false;
@@ -352,8 +352,7 @@ public class MapFragment extends SupportMapFragment
     @Override
     public boolean onMarkerClick(Marker marker) {
         if(noTimesAvailable){
-            // TODO strings.xml
-            showSnackbar("Arrival predictions are not available at this time.");
+            showSnackbar(getString(R.string.arrivals_empty_view_message));
         }else if(stopArrivalTimes != null){
             showSnackbar(stopArrivalTimes.get(marker.getTitle()));
         }

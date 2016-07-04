@@ -16,9 +16,6 @@ public class DetailActivity extends AppCompatActivity {
 
     private final String TAG = DetailActivity.class.getSimpleName();
 
-    private MyAdapter mAdapter;
-    private ViewPager mPager;
-    private Toolbar toolbar;
     private static String routeName;
     private static int routeID;
 
@@ -31,7 +28,7 @@ public class DetailActivity extends AppCompatActivity {
         routeName = bundle.getString(Constants.ROUTE_NAME_KEY);
         routeID = bundle.getInt(Constants.ROUTE_ID_KEY);
 
-        toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setTitle(routeName);
 
@@ -42,9 +39,9 @@ public class DetailActivity extends AppCompatActivity {
             }
         });
 
-        mAdapter = new MyAdapter(getSupportFragmentManager(), this);
+        MyAdapter mAdapter = new MyAdapter(getSupportFragmentManager(), this);
 
-        mPager = (ViewPager) findViewById(R.id.pager_detail);
+        ViewPager mPager = (ViewPager) findViewById(R.id.pager_detail);
         mPager.setAdapter(mAdapter);
 
         // This is required to avoid a black flash when the map is loaded.  The flash is due
