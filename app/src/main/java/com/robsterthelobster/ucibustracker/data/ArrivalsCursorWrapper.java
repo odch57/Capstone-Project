@@ -10,6 +10,11 @@ import com.robsterthelobster.ucibustracker.Utility;
 
 /**
  * Created by robin on 7/4/2016.
+ *
+ * Used to filter (distances > threshold)
+ *
+ * Based on implementation
+ * https://gist.github.com/ramzes642/5400792
  */
 public class ArrivalsCursorWrapper extends CursorWrapper{
 
@@ -17,18 +22,23 @@ public class ArrivalsCursorWrapper extends CursorWrapper{
     private int count=0;
     private int pos=0;
 
-    public ArrivalsCursorWrapper(Cursor cursor, Location location, int latColumn, int longColumn) {
+    public ArrivalsCursorWrapper(Cursor cursor, Location location, int radius) {
         super(cursor);
         this.count = super.getCount();
         this.index = new int[this.count];
+
+        int latColumn = ArrivalsFragment.C_LATITUDE;
+        int longColumn = ArrivalsFragment.C_LONGITUDE;
+
         for (int i=0;i<this.count;i++) {
             super.moveToPosition(i);
 
             double distance = Utility.getDistanceBetweenTwoPoints(
                     location, getDouble(latColumn), getDouble(longColumn));
-            // 500 meters
-            Log.d("distance", cursor.getString(ArrivalsFragment.C_STOP_NAME) + ": " + distance );
-            if (distance < 500)
+
+            Log.d("Distance: ", distance+"" );
+
+            if (distance <= radius)
                 this.index[this.pos++] = i;
         }
         this.count = this.pos;
@@ -64,9 +74,8 @@ public class ArrivalsCursorWrapper extends CursorWrapper{
     @Override
     public boolean moveToPosition(int position) {
         this.pos = position;
-        if (position >= this.count || position < 0)
-            return false;
-        return super.moveToPosition(this.index[position]);
+        return !(position >= this.count || position < 0)
+                && super.moveToPosition(this.index[position]);
     }
 
     @Override

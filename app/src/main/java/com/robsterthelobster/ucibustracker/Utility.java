@@ -20,6 +20,10 @@ public class Utility {
                 activeNetwork.isConnectedOrConnecting();
     }
 
+    /*
+        append minutes/seconds with min
+        more detailed if given seconds
+     */
     public static String getArrivalTime(int minutes, double seconds){
         if(seconds > 60){
             return getArrivalTime(minutes);
@@ -31,15 +35,16 @@ public class Utility {
     }
 
     public static String getArrivalTime(int minutes){
-        // minutes passed from (minutes, seconds) won't be 0
-        // if 0, it means there's no more arrivals
         if(minutes == 0){
             return "LAST";
         }
         return minutes + " min";
     }
 
-    public static float hexToFloat(String colorStr) {
+    /*
+        convert hex string into a hue
+     */
+    public static float hexToHue(String colorStr) {
         colorStr = colorStr.replace("#", "");
         int color = (int)Long.parseLong(colorStr, 16);
         int red = (color >> 16) & 0xFF;
@@ -50,6 +55,13 @@ public class Utility {
         return hsv[0];
     }
 
+    /*
+        distance between two latlng
+        implementation of haversine formula
+
+        http://stackoverflow.com/questions/3695224/
+        sqlite-getting-nearest-locations-with-latitude-and-longitude
+     */
     public static double getDistanceBetweenTwoPoints(Location location, double latitude, double longitude) {
         if(location == null){
             return 0;

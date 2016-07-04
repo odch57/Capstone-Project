@@ -179,7 +179,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
             @Override
             public void onFailure(Call<List<Route>> call, Throwable t) {
-                Log.d(TAG, t.getMessage());
+                Log.d(TAG, t.getMessage().toString());
             }
         });
     }
@@ -239,7 +239,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
             @Override
             public void onFailure(Call<List<Stop>> call, Throwable t) {
-                Log.d(TAG, t.getMessage());
+                Log.d(TAG, t.getMessage().toString());
             }
         });
     }
@@ -296,7 +296,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
             @Override
             public void onFailure(Call<Arrivals> call, Throwable t) {
-                Log.d(TAG, t.getMessage());
+                Log.d(TAG, t.getMessage().toString());
             }
         });
     }
@@ -333,7 +333,7 @@ public class ArrivalsActivity extends AppCompatActivity
 
             @Override
             public void onFailure(Call<List<Vehicle>> call, Throwable t) {
-                Log.d(TAG, t.getMessage());
+                Log.d(TAG, t.getMessage().toString());
             }
         });
     }

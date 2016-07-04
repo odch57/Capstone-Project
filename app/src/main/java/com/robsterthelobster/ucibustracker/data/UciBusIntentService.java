@@ -1,4 +1,4 @@
-package com.robsterthelobster.ucibustracker;
+package com.robsterthelobster.ucibustracker.data;
 
 import android.app.IntentService;
 import android.content.Intent;

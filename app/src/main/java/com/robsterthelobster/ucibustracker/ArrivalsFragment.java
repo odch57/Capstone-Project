@@ -26,6 +26,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
@@ -236,7 +237,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                     mRecyclerView.setVisibility(View.VISIBLE);
                     emptyView.setVisibility(View.INVISIBLE);
                 }
-                ArrivalsCursorWrapper arrivalsCursor = new ArrivalsCursorWrapper(cursor, mLocation, C_LATITUDE, C_LONGITUDE);
+                ArrivalsCursorWrapper arrivalsCursor = new ArrivalsCursorWrapper(cursor, mLocation,
+                        getContext().getResources().getInteger(R.integer.nearby_distance));
                 mAdapter.swapCursor(arrivalsCursor);
                 break;
             case STOP_LOADER:
