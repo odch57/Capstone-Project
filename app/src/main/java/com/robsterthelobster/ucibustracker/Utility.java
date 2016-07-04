@@ -2,6 +2,8 @@ package com.robsterthelobster.ucibustracker;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.PointF;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -46,5 +48,26 @@ public class Utility {
         float[] hsv = new float[3];
         Color.RGBToHSV(red, green, blue, hsv);
         return hsv[0];
+    }
+
+    public static double getDistanceBetweenTwoPoints(Location location, double latitude, double longitude) {
+        if(location == null){
+            return 0;
+        }
+        double EARTH_RADIUS = 6371000; // meters
+        double l_lat = location.getLatitude();
+        double l_long = location.getLongitude();
+
+        double dLat = Math.toRadians(l_lat - latitude);
+        double dLon = Math.toRadians(l_long - longitude);
+        double lat1 = Math.toRadians(latitude);
+        double lat2 = Math.toRadians(l_lat);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2)
+                * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double d = EARTH_RADIUS * c;
+
+        return d;
     }
 }

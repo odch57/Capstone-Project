@@ -18,6 +18,7 @@ package com.robsterthelobster.ucibustracker;
 
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.PointF;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -40,6 +41,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.robsterthelobster.ucibustracker.data.ArrivalsCursorWrapper;
 import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
@@ -64,7 +66,9 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
             BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR,
             BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME,
-            BusContract.FavoriteEntry.TABLE_NAME + "." + BusContract.FavoriteEntry.FAVORITE
+            BusContract.FavoriteEntry.TABLE_NAME + "." + BusContract.FavoriteEntry.FAVORITE,
+            BusContract.StopEntry.LATITUDE,
+            BusContract.StopEntry.LONGITUDE
     };
     public static final int C_ROUTE_ID = 1;
     public static final int C_ROUTE_NAME = 2;
@@ -77,6 +81,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int C_COLOR = 9;
     public static final int C_STOP_NAME = 10;
     public static final int C_FAVORITE = 11;
+    public static final int C_LATITUDE = 12;
+    public static final int C_LONGITUDE = 13;
 
     private final String[] STOP_COLUMNS = {
             BusContract.StopEntry.STOP_ID,
@@ -98,6 +104,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     private GoogleApiClient mGoogleApiClient;
     protected LocationRequest mLocationRequest;
+    private Location mLocation;
 
     private String routeName;
     private boolean hasRouteID = false;
@@ -122,12 +129,14 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onStart() {
         super.onStart();
-        mGoogleApiClient.connect();
+        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
     }
 
     @Override
     public void onStop() {
-        if(mGoogleApiClient != null && mGoogleApiClient.isConnected()){
+        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
         super.onStop();
@@ -136,8 +145,14 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+        getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+
     }
 
     @Override
@@ -166,6 +181,20 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
+
+        String location = "";
+        if(mLocation != null){
+            double latitude = mLocation.getLatitude();
+            double longitude = mLocation.getLongitude();
+
+            double fudge = Math.pow(Math.cos(Math.toRadians(latitude)),2);
+
+            String latOrder = "(" + latitude + " - " + BusContract.StopEntry.LATITUDE + ")";
+            String longOrder = "(" + longitude + " - " + BusContract.StopEntry.LONGITUDE + ")";
+            location = "(" + latOrder + "*" + latOrder +
+                    "+" + longOrder + "*" + longOrder + "*" + fudge + "), ";
+        }
+
         switch (id) {
             case ARRIVAL_LOADER:
                 if(hasRouteID){
@@ -180,12 +209,13 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                 }else {
                     // FAVORITES, THEN ARRIVAL TIME
                     String sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
+                            location +
                             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
                     return new CursorLoader(getContext(),
                             BusContract.ArrivalEntry.CONTENT_URI,
                             ARRIVAL_COLUMNS,
-                            BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                            new String[]{"1"},
+                            BusContract.ArrivalEntry.IS_CURRENT + " =? ",
+                            new String[]{"0"},
                             sortOrder);
                 }
             default:
@@ -206,7 +236,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                     mRecyclerView.setVisibility(View.VISIBLE);
                     emptyView.setVisibility(View.INVISIBLE);
                 }
-                mAdapter.swapCursor(cursor);
+                ArrivalsCursorWrapper arrivalsCursor = new ArrivalsCursorWrapper(cursor, mLocation, C_LATITUDE, C_LONGITUDE);
+                mAdapter.swapCursor(arrivalsCursor);
                 break;
             case STOP_LOADER:
                 break;
@@ -226,7 +257,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(1000);
+        mLocationRequest.setInterval(5000);
 
         if (ActivityCompat.checkSelfPermission(getContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -239,6 +270,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                     Constants.LOCATION_PERMISSION_REQUEST_CODE);
         }else {
+            mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
         }
@@ -257,5 +289,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, location.toString());
+        getLoaderManager().restartLoader(ARRIVAL_LOADER, null, this);
     }
 }

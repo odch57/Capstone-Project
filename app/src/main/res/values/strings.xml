@@ -12,10 +12,12 @@
     <string name="route_stops_tab">Stops</string>
     <string name="route_map_tab">Route Map</string>
     <string name="title_activity_maps">Map</string>
+    <string name="nav_submenu_title">Routes</string>
 
     <!-- Empty recycler view + other special case messages-->
     <string name="arrivals_empty_view_message">Arrival predictions are not available at this time.</string>
     <string name="not_connected_message">The network is not available to fetch arrival data.</string>
     <string name="no_nearby_stops_message">No nearby stops</string>
+
 
 </resources>

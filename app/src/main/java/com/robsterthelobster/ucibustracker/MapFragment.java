@@ -12,7 +12,6 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
@@ -22,7 +21,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -203,7 +201,7 @@ public class MapFragment extends SupportMapFragment
 
                     LatLng latLng = new LatLng(latitude, longitude);
                     stopMarkers.add(mMap.addMarker(new MarkerOptions()
-                            .icon(getBitmapDescriptor(R.drawable.ic_directions_bus_24dp,
+                            .icon(getBitmapDescriptor(R.drawable.ic_directions_bus_black_24dp,
                                     Color.parseColor(color)))
                             .position(latLng).title(stopName)));
                 }

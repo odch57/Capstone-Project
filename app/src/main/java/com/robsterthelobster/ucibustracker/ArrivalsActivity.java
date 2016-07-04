@@ -360,12 +360,12 @@ public class ArrivalsActivity extends AppCompatActivity
         switch(id){
             case ROUTE_LOADER:
                 Menu menu = navigationView.getMenu();
-                routesMenu = menu.addSubMenu(Constants.ROUTE_NAME_KEY);
+                routesMenu = menu.addSubMenu(R.string.nav_submenu_title);
                 while(data.moveToNext()){
                     String routeName = data.getString(C_ROUTE_NAME);
                     int routeID = data.getInt(C_ROUTE_ID);
                     MenuItem item = routesMenu.add(routeName);
-                    item.setIcon(R.drawable.ic_directions_bus_24dp);
+                    item.setIcon(R.drawable.ic_directions_bus_black_24dp);
                     item.setCheckable(true);
 
                     Intent intent = new Intent(this, DetailActivity.class);
