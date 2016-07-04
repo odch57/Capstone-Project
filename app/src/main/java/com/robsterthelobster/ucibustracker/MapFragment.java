@@ -51,7 +51,6 @@ public class MapFragment extends SupportMapFragment
         GoogleMap.OnMarkerClickListener{
 
     private final String TAG = MapFragment.class.getSimpleName();
-    private final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     private final int STOP_LOADER = 0;
     private final int VEHICLE_LOADER = 1;
@@ -313,7 +312,7 @@ public class MapFragment extends SupportMapFragment
             // Permission to access the location is missing.
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    LOCATION_PERMISSION_REQUEST_CODE);
+                    Constants.LOCATION_PERMISSION_REQUEST_CODE);
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);

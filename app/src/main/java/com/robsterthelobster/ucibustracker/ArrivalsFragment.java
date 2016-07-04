@@ -49,7 +49,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         LocationListener {
 
     private final String TAG = ArrivalsFragment.class.getSimpleName();
-    private final int REQUEST_LOCATION = 0;
 
     private final int ARRIVAL_LOADER = 0;
     private final String[] ARRIVAL_COLUMNS = {
@@ -163,14 +162,17 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                                     " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
                                     BusContract.ArrivalEntry.ROUTE_NAME + " = ?",
                             new String[]{"0", routeName},
-                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC");
+                            null);
                 }else {
+                    // FAVORITES, THEN ARRIVAL TIME
+                    String sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
+                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
                     return new CursorLoader(getContext(),
                             BusContract.ArrivalEntry.CONTENT_URI,
                             ARRIVAL_COLUMNS,
                             BusContract.ArrivalEntry.IS_CURRENT + " = ?",
-                            new String[]{"1"},
-                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC LIMIT 10");
+                            new String[]{"0"},
+                            sortOrder);
                 }
             default:
                 Log.d(TAG, "Not valid id: " + id);
@@ -212,7 +214,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION);
+                    Constants.LOCATION_PERMISSION_REQUEST_CODE);
         }else {
             LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
