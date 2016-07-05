@@ -235,7 +235,6 @@ public class MapFragment extends SupportMapFragment
                         int minutesAlt = data.getInt(C_ARRIVAL_MIN_ALT);
                         double seconds = data.getDouble(C_ARRIVAL_SECONDS);
 
-                        // TODO UTILITY STRINGS.XML
                         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
                         String altArrivalTime = Utility.getArrivalTime(minutesAlt);
                         String text = arrivalTime + "\n" + altArrivalTime;
@@ -278,8 +277,7 @@ public class MapFragment extends SupportMapFragment
         options.width(5);
         options.visible(true);
 
-        for ( Marker marker : stopMarkers )
-        {
+        for ( Marker marker : stopMarkers ) {
             options.add(marker.getPosition());
         }
 
@@ -350,7 +348,7 @@ public class MapFragment extends SupportMapFragment
     @Override
     public boolean onMarkerClick(Marker marker) {
         if(noTimesAvailable){
-            showSnackbar(getString(R.string.arrivals_empty_view_message));
+            showSnackbar(getString(R.string.empty_default_message));
         }else if(stopArrivalTimes != null){
             showSnackbar(stopArrivalTimes.get(marker.getTitle()));
         }

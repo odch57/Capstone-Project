@@ -15,9 +15,10 @@
     <string name="nav_submenu_title">Routes</string>
 
     <!-- Empty recycler view + other special case messages-->
-    <string name="arrivals_empty_view_message">Arrival predictions are not available at this time.</string>
-    <string name="not_connected_message">The network is not available to fetch arrival data.</string>
-    <string name="no_nearby_stops_message">No nearby stops</string>
+    <string name="empty_default_message">Arrival predictions are not available at this time.</string>
+    <string name="empty_no_connection_message">The network is not available to fetch arrival data.</string>
+    <string name="empty_no_nearby_message">There are no nearby stops. Please view the navigation drawer for specific routes.</string>
+    <string name="empty_no_location_message">Location is not available. Please allow location for nearby arrivals.</string>
 
 
 </resources>

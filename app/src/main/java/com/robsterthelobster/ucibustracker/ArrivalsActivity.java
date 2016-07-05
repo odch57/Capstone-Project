@@ -59,6 +59,7 @@ public class ArrivalsActivity extends AppCompatActivity
         setContentView(R.layout.activity_arrivals);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle(getString(R.string.title_activity_arrivals));
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -76,6 +77,9 @@ public class ArrivalsActivity extends AppCompatActivity
             transaction.commit();
         }
 
+        // called just in case there is already data, but no internet
+        // will get called again, in case routes have been changed
+        restartLoader();
         fetchRoutes();
     }
 

@@ -17,10 +17,6 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -45,6 +41,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -56,8 +53,6 @@ import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
-import java.util.Calendar;
-
 public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -68,7 +63,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     private final int ARRIVAL_LOADER = 0;
     private final int STOP_ARRIVAL_LOADER = 1;
     private final int NO_LOCATION_LOADER = 2;
-    private final int STOP_LOADER = 3;
+
     private final String[] ARRIVAL_COLUMNS = {
             BusContract.ArrivalEntry._ID,
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_ID,
@@ -99,19 +94,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int C_LATITUDE = 12;
     public static final int C_LONGITUDE = 13;
 
-    private final String[] STOP_COLUMNS = {
-            BusContract.StopEntry.STOP_ID,
-            BusContract.StopEntry.STOP_NAME,
-            BusContract.StopEntry.LATITUDE,
-            BusContract.StopEntry.LONGITUDE,
-            BusContract.RouteEntry.TABLE_NAME + "." + BusContract.RouteEntry.COLOR
-    };
-    public final int SC_STOP_ID = 0;
-    public final int SC_STOP_NAME = 1;
-    public final int SC_STOP_LAT = 2;
-    public final int SC_STOP_LONG = 3;
-    public final int SC_COLOR = 4;
-
     protected RecyclerView mRecyclerView;
     protected SwipeRefreshLayout mySwipeRefreshLayout;
     protected ArrivalsPredictionAdapter mAdapter;
@@ -125,7 +107,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     private Location mLocation;
 
     private String routeName;
-    private boolean hasRouteID = false;
+    private boolean hasRoute = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -134,7 +116,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         Bundle arguments = getArguments();
         if (arguments != null) {
             routeName = arguments.getString(Constants.ROUTE_NAME_KEY);
-            hasRouteID = true;
+            hasRoute = true;
         }
 
         mGoogleApiClient = new GoogleApiClient.Builder(getContext())
@@ -160,18 +142,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         super.onStop();
     }
 
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-
-    }
-
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity){
         mActivity = activity;
@@ -209,7 +180,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         setHasOptionsMenu(true);
 
         // just update for the default fragment
-        if(!hasRouteID) {
+        if(!hasRoute) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -224,7 +195,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                                 }
                             });
                         } catch (Exception e) {
-                            Log.d(TAG, e.getMessage().toString());
+                            Log.d(TAG, e.getMessage());
                         }
                     }
                 }
@@ -262,6 +233,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
 
+        String sortOrder = "";
         String location = "";
         if(mLocation != null){
             double latitude = mLocation.getLatitude();
@@ -275,22 +247,13 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                     "+" + longOrder + "*" + longOrder + "*" + fudge + "), ";
         }
 
-        String sortOrder;
         switch (id) {
             case ARRIVAL_LOADER:
                 // FAVORITES, THEN ARRIVAL TIME
                 sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
                         location +
                         BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
-                return new CursorLoader(getContext(),
-                        BusContract.ArrivalEntry.CONTENT_URI,
-                        ARRIVAL_COLUMNS,
-                        BusContract.ArrivalEntry.IS_CURRENT + " =? ",
-                        new String[]{"0"},
-                        sortOrder);
             case NO_LOCATION_LOADER:
-                sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
-                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
                 return new CursorLoader(getContext(),
                         BusContract.ArrivalEntry.CONTENT_URI,
                         ARRIVAL_COLUMNS,
@@ -315,17 +278,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         int id = loader.getId();
-        if(cursor.getCount() == 0){
-            mRecyclerView.setVisibility(View.INVISIBLE);
-            emptyView.setVisibility(View.VISIBLE);
-        }else{
-            mRecyclerView.setVisibility(View.VISIBLE);
-            emptyView.setVisibility(View.INVISIBLE);
-        }
         switch(id){
-            /*
-                Only the arrival_loader needs to have the cursor filtered
-             */
+            // Only the arrival_loader needs to have the cursor filtered
             case ARRIVAL_LOADER:
                 cursor = new ArrivalsCursorWrapper(cursor, mLocation,
                         getContext().getResources().getInteger(R.integer.nearby_distance));
@@ -333,18 +287,18 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             case NO_LOCATION_LOADER:
                 mAdapter.swapCursor(cursor);
                 break;
-            case STOP_LOADER:
-                break;
             default:
                 Log.d(TAG, "Not valid id: " + id);
         }
+
+        updateEmptyView();
+
+        // stop refreshing after finish
         mySwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
-
-    }
+    public void onLoaderReset(Loader loader) {}
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
@@ -369,13 +323,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
         }
-        if(hasRouteID){
-            getLoaderManager().initLoader(STOP_ARRIVAL_LOADER, null, this);
-        }else if(mLocation != null){
-            getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
-        }else{
-            getLoaderManager().initLoader(NO_LOCATION_LOADER, null, this);
-        }
+        startLoaders();
     }
 
     @Override
@@ -405,8 +353,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     private void startLoaders(){
-
-        if(hasRouteID){
+        if(hasRoute){
             startLoader(STOP_ARRIVAL_LOADER);
         }else if(mLocation != null){
             startLoader(ARRIVAL_LOADER);
@@ -421,6 +368,25 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             getLoaderManager().restartLoader(loader_id, null, this);
         }else{
             getLoaderManager().initLoader(loader_id, null, this);
+        }
+    }
+
+    private void updateEmptyView(){
+        if(mAdapter.getItemCount() == 0) {
+            int message = R.string.empty_default_message;
+            if (!Utility.isNetworkAvailable(getContext())) {
+                message = R.string.empty_no_connection_message;
+            } else if (mLocation == null) {
+                message = R.string.empty_no_location_message;
+            } else if (mAdapter.getCursor() instanceof ArrivalsCursorWrapper) {
+                message = R.string.empty_no_nearby_message;
+            }
+            emptyView.setText(message);
+            mRecyclerView.setVisibility(View.GONE);
+            emptyView.setVisibility(View.VISIBLE);
+        }else{
+            mRecyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.GONE);
         }
     }
 }

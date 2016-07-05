@@ -40,6 +40,6 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:visibility="gone"
-        android:text="@string/arrivals_empty_view_message" />
+        android:text="@string/empty_default_message" />
 
 </RelativeLayout>

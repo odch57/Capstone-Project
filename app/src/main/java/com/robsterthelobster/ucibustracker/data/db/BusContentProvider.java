@@ -320,6 +320,13 @@ public class BusContentProvider extends ContentProvider {
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
             case ARRIVALS:
+                // keep only 500 records
+                mDbHelper.getWritableDatabase().execSQL(
+                        "DELETE FROM " + BusContract.ArrivalEntry.TABLE_NAME + " WHERE " +
+                                BusContract.ArrivalEntry._ID + " IN (SELECT " +
+                                BusContract.ArrivalEntry._ID + " FROM " +
+                                BusContract.ArrivalEntry.TABLE_NAME + " ORDER BY " +
+                                BusContract.ArrivalEntry._ID + " DESC LIMIT -1 OFFSET 500)");
                 returnCount = bulkInsert(BusContract.ArrivalEntry.TABLE_NAME,
                         values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
