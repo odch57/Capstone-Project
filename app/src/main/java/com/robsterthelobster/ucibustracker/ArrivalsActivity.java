@@ -104,7 +104,7 @@ public class ArrivalsActivity extends AppCompatActivity
     public void restartLoader() {
         Loader loader = getLoaderManager().getLoader(ROUTE_LOADER);
 
-        if(loader == null || loader.isStarted()){
+        if(loader != null){
             getLoaderManager().restartLoader(ROUTE_LOADER, null, this);
         }else{
             getLoaderManager().initLoader(ROUTE_LOADER, null, this);

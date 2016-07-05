@@ -16,12 +16,17 @@
 
 package com.robsterthelobster.ucibustracker;
 
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -50,6 +55,8 @@ import com.robsterthelobster.ucibustracker.data.ArrivalsCursorWrapper;
 import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
+
+import java.util.Calendar;
 
 public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         GoogleApiClient.ConnectionCallbacks,
@@ -110,6 +117,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     protected ArrivalsPredictionAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
     protected TextView emptyView;
+    Handler mHandler = new Handler();
+    Activity mActivity;
 
     private GoogleApiClient mGoogleApiClient;
     protected LocationRequest mLocationRequest;
@@ -164,6 +173,12 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
+    public void onAttach(Activity activity){
+        mActivity = activity;
+        super.onAttach(activity);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_arrivals, container, false);
@@ -192,6 +207,29 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         mAdapter = new ArrivalsPredictionAdapter(getContext(), null);
         mRecyclerView.setAdapter(mAdapter);
         setHasOptionsMenu(true);
+
+        // just update for the default fragment
+        if(!hasRouteID) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            Thread.sleep(20 * 1000); // 20s
+                            mHandler.post(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    updateRouteData();
+                                }
+                            });
+                        } catch (Exception e) {
+                            Log.d(TAG, e.getMessage().toString());
+                        }
+                    }
+                }
+            }).start();
+        }
         return rootView;
     }
 
@@ -300,6 +338,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             default:
                 Log.d(TAG, "Not valid id: " + id);
         }
+        mySwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
@@ -354,33 +393,34 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         Log.d(TAG, location.toString());
         mLocation = location;
 
+        // if location changed, force update
         updateRouteData();
     }
 
     private void updateRouteData() {
-//        Intent alarmIntent = new Intent(getActivity(), UciBusIntentService.AlarmReceiver.class);
-//
-//        PendingIntent pi = PendingIntent.getBroadcast(getActivity(), 0, alarmIntent, 0);
-//
-//        AlarmManager am = (AlarmManager)getActivity().getSystemService(Context.ALARM_SERVICE);
-//
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.setTimeInMillis(System.currentTimeMillis());
-//        calendar.add(Calendar.SECOND, 0);
-//        long frequency = 60 * 1000;
-//
-//        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pi);
-        Intent intent = new Intent(getActivity(), UciBusIntentService.class);
+        Intent intent = new Intent(mActivity, UciBusIntentService.class);
         getActivity().startService(intent);
 
-        if(hasRouteID){
-            getLoaderManager().restartLoader(STOP_ARRIVAL_LOADER, null, this);
-        }else {
-            getLoaderManager().restartLoader(ARRIVAL_LOADER, null, this);
-        }
+        startLoaders();
+    }
 
-        mySwipeRefreshLayout.setRefreshing(false);
-        ContentResolver cr = getContext().getContentResolver();
-        cr.notifyChange(BusContract.RouteEntry.CONTENT_URI, null);
+    private void startLoaders(){
+
+        if(hasRouteID){
+            startLoader(STOP_ARRIVAL_LOADER);
+        }else if(mLocation != null){
+            startLoader(ARRIVAL_LOADER);
+        }else{
+            startLoader(NO_LOCATION_LOADER);
+        }
+    }
+
+    private void startLoader(int loader_id){
+        Loader loader = getLoaderManager().getLoader(loader_id);
+        if(loader != null){
+            getLoaderManager().restartLoader(loader_id, null, this);
+        }else{
+            getLoaderManager().initLoader(loader_id, null, this);
+        }
     }
 }

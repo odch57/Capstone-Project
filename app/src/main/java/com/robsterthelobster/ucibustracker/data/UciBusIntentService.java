@@ -40,9 +40,9 @@ public class UciBusIntentService extends IntentService {
         super("UciBusIntentService");
     }
 
-
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "fetching data");
         fetchData();
     }
 
@@ -65,8 +65,6 @@ public class UciBusIntentService extends IntentService {
             public void onResponse(Call<List<Route>> call, Response<List<Route>> response) {
                 List<Route> routes = response.body();
                 if(routes != null){
-                    Log.d(TAG, "retrofit routeCall : success");
-
                     Vector<ContentValues> cVVector = new Vector<>(routes.size());
                     for(Route route : routes){
                         //Log.d(TAG, "route name: " + route.getName());
@@ -110,7 +108,6 @@ public class UciBusIntentService extends IntentService {
 
                 List<Stop> stops = response.body();
                 if(stops != null){
-                    Log.d(TAG, "retrofit stopsCall : success");
                     Vector<ContentValues> stopVector = new Vector<>(stops.size());
                     Vector<ContentValues> fVector = new Vector<>(stops.size());
                     for(Stop stop : stops){
@@ -163,7 +160,6 @@ public class UciBusIntentService extends IntentService {
                 Arrivals arrivals = response.body();
 
                 if(arrivals != null){
-                    Log.d(TAG, "retrofit arrivalsCall : success");
                     List<Prediction> predictions = arrivals.getPredictions();
                     String predictionTime = arrivals.getPredictionTime();
 
