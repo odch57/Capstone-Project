@@ -6,7 +6,7 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="action_refresh">Refresh</string>
 
     <!-- Route Activity strings (Detail and map fragments)-->
     <string name="route_stops_tab">Stops</string>

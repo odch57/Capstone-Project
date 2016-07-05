@@ -16,9 +16,10 @@
 
 package com.robsterthelobster.ucibustracker;
 
+import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.PointF;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,13 +27,16 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -44,6 +48,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.robsterthelobster.ucibustracker.data.ArrivalsCursorWrapper;
 import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
+import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
 public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
@@ -54,7 +59,9 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     private final String TAG = ArrivalsFragment.class.getSimpleName();
 
     private final int ARRIVAL_LOADER = 0;
-    private final int STOP_LOADER = 1;
+    private final int STOP_ARRIVAL_LOADER = 1;
+    private final int NO_LOCATION_LOADER = 2;
+    private final int STOP_LOADER = 3;
     private final String[] ARRIVAL_COLUMNS = {
             BusContract.ArrivalEntry._ID,
             BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_ID,
@@ -99,6 +106,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     public final int SC_COLOR = 4;
 
     protected RecyclerView mRecyclerView;
+    protected SwipeRefreshLayout mySwipeRefreshLayout;
     protected ArrivalsPredictionAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
     protected TextView emptyView;
@@ -147,7 +155,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
     }
 
     @Override
@@ -169,10 +176,44 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(getContext()));
 
+        mySwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_refresh);
+
+        mySwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Log.i(TAG, "onRefresh called from SwipeRefreshLayout");
+
+                        updateRouteData();
+                    }
+                }
+        );
+
         mAdapter = new ArrivalsPredictionAdapter(getContext(), null);
         mRecyclerView.setAdapter(mAdapter);
-
+        setHasOptionsMenu(true);
         return rootView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.arrivals_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+
+        switch(item.getItemId()){
+            case R.id.menu_refresh:
+                Log.i(TAG, "Refresh menu item selected");
+                mySwipeRefreshLayout.setRefreshing(true);
+                updateRouteData();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -196,29 +237,37 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
                     "+" + longOrder + "*" + longOrder + "*" + fudge + "), ";
         }
 
+        String sortOrder;
         switch (id) {
             case ARRIVAL_LOADER:
-                if(hasRouteID){
-                    return new CursorLoader(getContext(),
-                            BusContract.ArrivalEntry.CONTENT_URI,
-                            ARRIVAL_COLUMNS,
-                            BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
-                                    " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
-                                    BusContract.ArrivalEntry.ROUTE_NAME + " = ?",
-                            new String[]{"0", routeName},
-                            null);
-                }else {
-                    // FAVORITES, THEN ARRIVAL TIME
-                    String sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
-                            location +
-                            BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
-                    return new CursorLoader(getContext(),
-                            BusContract.ArrivalEntry.CONTENT_URI,
-                            ARRIVAL_COLUMNS,
-                            BusContract.ArrivalEntry.IS_CURRENT + " =? ",
-                            new String[]{"0"},
-                            sortOrder);
-                }
+                // FAVORITES, THEN ARRIVAL TIME
+                sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
+                        location +
+                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
+                return new CursorLoader(getContext(),
+                        BusContract.ArrivalEntry.CONTENT_URI,
+                        ARRIVAL_COLUMNS,
+                        BusContract.ArrivalEntry.IS_CURRENT + " =? ",
+                        new String[]{"0"},
+                        sortOrder);
+            case NO_LOCATION_LOADER:
+                sortOrder = BusContract.FavoriteEntry.FAVORITE + " DESC, " +
+                        BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL + " ASC";
+                return new CursorLoader(getContext(),
+                        BusContract.ArrivalEntry.CONTENT_URI,
+                        ARRIVAL_COLUMNS,
+                        BusContract.ArrivalEntry.IS_CURRENT + " =? ",
+                        new String[]{"0"},
+                        sortOrder);
+            case STOP_ARRIVAL_LOADER:
+                return new CursorLoader(getContext(),
+                        BusContract.ArrivalEntry.CONTENT_URI,
+                        ARRIVAL_COLUMNS,
+                        BusContract.ArrivalEntry.IS_CURRENT + " = ?" +
+                                " AND " + BusContract.ArrivalEntry.TABLE_NAME + "." +
+                                BusContract.ArrivalEntry.ROUTE_NAME + " = ?",
+                        new String[]{"0", routeName},
+                        null);
             default:
                 Log.d(TAG, "Not valid id: " + id);
                 return null;
@@ -228,18 +277,23 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         int id = loader.getId();
+        if(cursor.getCount() == 0){
+            mRecyclerView.setVisibility(View.INVISIBLE);
+            emptyView.setVisibility(View.VISIBLE);
+        }else{
+            mRecyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.INVISIBLE);
+        }
         switch(id){
+            /*
+                Only the arrival_loader needs to have the cursor filtered
+             */
             case ARRIVAL_LOADER:
-                if(cursor.getCount() == 0){
-                    mRecyclerView.setVisibility(View.INVISIBLE);
-                    emptyView.setVisibility(View.VISIBLE);
-                }else{
-                    mRecyclerView.setVisibility(View.VISIBLE);
-                    emptyView.setVisibility(View.INVISIBLE);
-                }
-                ArrivalsCursorWrapper arrivalsCursor = new ArrivalsCursorWrapper(cursor, mLocation,
+                cursor = new ArrivalsCursorWrapper(cursor, mLocation,
                         getContext().getResources().getInteger(R.integer.nearby_distance));
-                mAdapter.swapCursor(arrivalsCursor);
+            case STOP_ARRIVAL_LOADER:
+            case NO_LOCATION_LOADER:
+                mAdapter.swapCursor(cursor);
                 break;
             case STOP_LOADER:
                 break;
@@ -276,6 +330,13 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
         }
+        if(hasRouteID){
+            getLoaderManager().initLoader(STOP_ARRIVAL_LOADER, null, this);
+        }else if(mLocation != null){
+            getLoaderManager().initLoader(ARRIVAL_LOADER, null, this);
+        }else{
+            getLoaderManager().initLoader(NO_LOCATION_LOADER, null, this);
+        }
     }
 
     @Override
@@ -291,6 +352,35 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, location.toString());
-        getLoaderManager().restartLoader(ARRIVAL_LOADER, null, this);
+        mLocation = location;
+
+        updateRouteData();
+    }
+
+    private void updateRouteData() {
+//        Intent alarmIntent = new Intent(getActivity(), UciBusIntentService.AlarmReceiver.class);
+//
+//        PendingIntent pi = PendingIntent.getBroadcast(getActivity(), 0, alarmIntent, 0);
+//
+//        AlarmManager am = (AlarmManager)getActivity().getSystemService(Context.ALARM_SERVICE);
+//
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.setTimeInMillis(System.currentTimeMillis());
+//        calendar.add(Calendar.SECOND, 0);
+//        long frequency = 60 * 1000;
+//
+//        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pi);
+        Intent intent = new Intent(getActivity(), UciBusIntentService.class);
+        getActivity().startService(intent);
+
+        if(hasRouteID){
+            getLoaderManager().restartLoader(STOP_ARRIVAL_LOADER, null, this);
+        }else {
+            getLoaderManager().restartLoader(ARRIVAL_LOADER, null, this);
+        }
+
+        mySwipeRefreshLayout.setRefreshing(false);
+        ContentResolver cr = getContext().getContentResolver();
+        cr.notifyChange(BusContract.RouteEntry.CONTENT_URI, null);
     }
 }

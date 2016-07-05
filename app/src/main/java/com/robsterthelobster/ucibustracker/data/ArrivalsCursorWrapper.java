@@ -36,8 +36,6 @@ public class ArrivalsCursorWrapper extends CursorWrapper{
             double distance = Utility.getDistanceBetweenTwoPoints(
                     location, getDouble(latColumn), getDouble(longColumn));
 
-            Log.d("Distance: ", distance+"" );
-
             if (distance <= radius)
                 this.index[this.pos++] = i;
         }

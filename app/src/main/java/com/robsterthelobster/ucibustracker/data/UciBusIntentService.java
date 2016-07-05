@@ -1,91 +1,260 @@
 package com.robsterthelobster.ucibustracker.data;
 
 import android.app.IntentService;
-import android.content.Intent;
+import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
+import com.robsterthelobster.ucibustracker.ArrivalsActivity;
+import com.robsterthelobster.ucibustracker.data.db.BusContract;
+import com.robsterthelobster.ucibustracker.data.models.Arrivals;
+import com.robsterthelobster.ucibustracker.data.models.Prediction;
+import com.robsterthelobster.ucibustracker.data.models.Route;
+import com.robsterthelobster.ucibustracker.data.models.Stop;
+import com.robsterthelobster.ucibustracker.data.models.Vehicle;
+
+import java.util.List;
+import java.util.Vector;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
+
  */
 public class UciBusIntentService extends IntentService {
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.robsterthelobster.ucibustracker.action.FOO";
-    private static final String ACTION_BAZ = "com.robsterthelobster.ucibustracker.action.BAZ";
 
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.robsterthelobster.ucibustracker.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.robsterthelobster.ucibustracker.extra.PARAM2";
+    private final String TAG = UciBusIntentService.class.getSimpleName();
+
+    UciBusApiEndpointInterface apiService;
+    public final String BASE_URL = "http://www.ucishuttles.com/";
 
     public UciBusIntentService() {
         super("UciBusIntentService");
     }
 
-    /**
-     * Starts this service to perform action Foo with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, UciBusIntentService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, UciBusIntentService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionFoo(param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
+        fetchData();
+    }
+
+    private void fetchData() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        apiService =
+                retrofit.create(UciBusApiEndpointInterface.class);
+
+        fetchRoutesAndSubData();
+    }
+
+    private void fetchRoutesAndSubData(){
+        Call<List<Route>> routeCall = apiService.getRoutes();
+        routeCall.enqueue(new Callback<List<Route>>() {
+            @Override
+            public void onResponse(Call<List<Route>> call, Response<List<Route>> response) {
+                List<Route> routes = response.body();
+                if(routes != null){
+                    Log.d(TAG, "retrofit routeCall : success");
+
+                    Vector<ContentValues> cVVector = new Vector<>(routes.size());
+                    for(Route route : routes){
+                        //Log.d(TAG, "route name: " + route.getName());
+                        ContentValues routeValues = new ContentValues();
+
+                        int routeID = route.getId();
+
+                        routeValues.put(BusContract.RouteEntry.ROUTE_ID, routeID);
+                        routeValues.put(BusContract.RouteEntry.ROUTE_NAME, route.getName());
+                        routeValues.put(BusContract.RouteEntry.COLOR, route.getColor());
+
+                        cVVector.add(routeValues);
+
+                        callVehicles(routeID);
+                        callStops(routeID);
+                    }
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.RouteEntry.CONTENT_URI, cvArray);
+                    }
+                }
             }
+
+            @Override
+            public void onFailure(Call<List<Route>> call, Throwable t) {
+                Log.d(TAG, t.getMessage().toString());
+            }
+        });
+    }
+
+    private void callStops(final int routeID){
+        Call<List<Stop>> stopCall = apiService.getStops(routeID);
+        stopCall.enqueue(new Callback<List<Stop>>() {
+            @Override
+            public void onResponse(Call<List<Stop>> call, Response<List<Stop>> response) {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
+                getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,
+                        null, null);
+
+                List<Stop> stops = response.body();
+                if(stops != null){
+                    Log.d(TAG, "retrofit stopsCall : success");
+                    Vector<ContentValues> stopVector = new Vector<>(stops.size());
+                    Vector<ContentValues> fVector = new Vector<>(stops.size());
+                    for(Stop stop : stops){
+                        //Log.d(TAG, "Stop : " + stop.getName());
+                        ContentValues stopValues = new ContentValues();
+                        ContentValues favoriteValues = new ContentValues();
+                        int stopID = stop.getId();
+                        stopValues.put(BusContract.StopEntry.ROUTE_ID, routeID);
+                        stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
+                        stopValues.put(BusContract.StopEntry.STOP_NAME, stop.getName());
+                        stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
+                        stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
+
+                        favoriteValues.put(BusContract.FavoriteEntry.FAV_KEY,
+                                routeID + "-" + stopID);
+                        favoriteValues.put(BusContract.FavoriteEntry.ROUTE_ID, routeID);
+                        favoriteValues.put(BusContract.FavoriteEntry.STOP_ID, stopID);
+                        favoriteValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
+
+                        stopVector.add(stopValues);
+                        fVector.add(favoriteValues);
+
+                        callArrivals(routeID, stopID);
+                    }
+                    if ( stopVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[stopVector.size()];
+                        stopVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.StopEntry.CONTENT_URI, cvArray);
+
+                        ContentValues[] fArray = new ContentValues[fVector.size()];
+                        fVector.toArray(fArray);
+                        getContentResolver().bulkInsert(BusContract.FavoriteEntry.CONTENT_URI, fArray);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Stop>> call, Throwable t) {
+                Log.d(TAG, t.getMessage().toString());
+            }
+        });
+    }
+
+    private void callArrivals(final int routeID, int stopID){
+        Call<Arrivals> arrivalsCall = apiService.getArrivalTimes(routeID, stopID);
+        arrivalsCall.enqueue(new Callback<Arrivals>() {
+            @Override
+            public void onResponse(Call<Arrivals> call, Response<Arrivals> response) {
+
+                Arrivals arrivals = response.body();
+
+                if(arrivals != null){
+                    Log.d(TAG, "retrofit arrivalsCall : success");
+                    List<Prediction> predictions = arrivals.getPredictions();
+                    String predictionTime = arrivals.getPredictionTime();
+
+                    int size = predictions.size();
+                    ContentValues arrivalValues = new ContentValues();
+
+                    for(int i = 0; i < size; i++){
+                        Prediction prediction = predictions.get(i);
+                        //Log.d(TAG, "Prediction : " + prediction.getArriveTime());
+
+                        switch (i){
+                            case 0:
+                                // primary + main prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
+                                arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
+                                arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
+                                arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
+                                arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
+                                arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
+                                arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
+                                break;
+                            case 1:
+                                // get the second prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT, prediction.getMinutes());
+                                break;
+                            case 2:
+                                // get the third prediction
+                                arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT_2, prediction.getMinutes());
+                                break;
+                            default:
+                                // do nothing
+                                Log.d(TAG, "additional predictions beyond 2");
+                        }
+                    }
+                    if(arrivalValues.size() > 0) {
+                        getContentResolver().insert(BusContract.ArrivalEntry.CONTENT_URI, arrivalValues);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Arrivals> call, Throwable t) {
+                Log.d(TAG, t.getMessage().toString());
+            }
+        });
+    }
+
+    private void callVehicles(int routeID){
+        getContentResolver().delete(BusContract.VehicleEntry.CONTENT_URI, null, null);
+
+        Call<List<Vehicle>> vehiclesCall = apiService.getVehicles(routeID);
+        vehiclesCall.enqueue(new Callback<List<Vehicle>>() {
+            @Override
+            public void onResponse(Call<List<Vehicle>> call, Response<List<Vehicle>> response) {
+                List<Vehicle> vehicles = response.body();
+                if(vehicles != null){
+                    Vector<ContentValues> cVVector = new Vector<>(vehicles.size());
+                    for(Vehicle vehicle : vehicles){
+                        ContentValues vehicleValues = new ContentValues();
+
+                        vehicleValues.put(BusContract.VehicleEntry.ROUTE_ID, vehicle.getRouteId());
+                        vehicleValues.put(BusContract.VehicleEntry.BUS_NAME, vehicle.getName());
+                        vehicleValues.put(BusContract.VehicleEntry.LATITUDE, vehicle.getLatitude());
+                        vehicleValues.put(BusContract.VehicleEntry.LONGITUDE, vehicle.getLongitude());
+                        vehicleValues.put(BusContract.VehicleEntry.PERCENTAGE, vehicle.getApcPercentage());
+                        vehicleValues.put(BusContract.VehicleEntry.DIRECTION, vehicle.getHeading());
+
+                        cVVector.add(vehicleValues);
+                    }
+                    if ( cVVector.size() > 0 ) {
+                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                        cVVector.toArray(cvArray);
+                        getContentResolver().bulkInsert(BusContract.VehicleEntry.CONTENT_URI, cvArray);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Vehicle>> call, Throwable t) {
+                Log.d(TAG, t.getMessage().toString());
+            }
+        });
+    }
+
+    public static class AlarmReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent sendIntent = new Intent(context, UciBusIntentService.class);
+            context.startService(sendIntent);
         }
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
 }
