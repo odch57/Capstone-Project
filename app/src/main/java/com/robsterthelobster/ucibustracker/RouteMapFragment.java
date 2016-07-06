@@ -138,7 +138,7 @@ public class RouteMapFragment extends SupportMapFragment
         View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
         View viewButtons = inflater.inflate(R.layout.fragment_map_buttons, null);
-        FrameLayout mainChild = (FrameLayout) ((ViewGroup)rootView).getChildAt(0);
+        ViewGroup mainChild = (ViewGroup) ((ViewGroup)rootView).getChildAt(0);
         mainChild.addView(viewButtons);
         Button btn1 = (Button) rootView.findViewById(R.id.button_center);
         btn1.setOnClickListener(new View.OnClickListener() {
