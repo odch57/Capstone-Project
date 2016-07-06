@@ -188,8 +188,10 @@ public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<Arrival
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
         String color = cursor.getString(ArrivalsFragment.C_COLOR);
         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
-        String altArrivalTime = Utility.getArrivalTime(minutesAlt);
-
+        String altArrivalTime = (minutesAlt == 0) ?
+                mContext.getString(R.string.arrival_time, minutesAlt+"") :
+                mContext.getString(R.string.no_arrival_time);
+       ;
         final int position = cursor.getPosition();
 
         final CheckBox checkBox = viewHolder.getButtonView();
@@ -230,7 +232,7 @@ public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<Arrival
 
         viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
-        viewHolder.getTimeView().setText(arrivalTime);
+        viewHolder.getTimeView().setText(mContext.getString(R.string.arrival_time, arrivalTime));
         viewHolder.getTimeViewAlt().setText(altArrivalTime);
         viewHolder.getStopView().setText(stopName);
     }

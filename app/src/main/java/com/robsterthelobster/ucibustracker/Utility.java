@@ -28,19 +28,12 @@ public class Utility {
      */
     public static String getArrivalTime(int minutes, double seconds){
         if(seconds > 60){
-            return getArrivalTime(minutes);
+            return minutes + "";
         }else if(seconds > 0){
-            return "<1 min";
+            return "<1";
         }else{
-            return "0 min";
+            return "0";
         }
-    }
-
-    public static String getArrivalTime(int minutes){
-        if(minutes == 0){
-            return "LAST";
-        }
-        return minutes + " min";
     }
 
     /*

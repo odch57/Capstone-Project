@@ -83,7 +83,7 @@ public class DetailActivity extends AppCompatActivity {
                 case 1:
                     bundle.putInt(Constants.ROUTE_ID_KEY, routeID);
 
-                    MapFragment mapFragment = new MapFragment();
+                    RouteMapFragment mapFragment = new RouteMapFragment();
                     mapFragment.setArguments(bundle);
 
                     return mapFragment;

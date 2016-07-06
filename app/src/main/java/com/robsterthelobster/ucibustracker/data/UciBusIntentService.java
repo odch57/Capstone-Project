@@ -117,6 +117,11 @@ public class UciBusIntentService extends IntentService {
         stopCall.enqueue(new Callback<List<Stop>>() {
             @Override
             public void onResponse(Call<List<Stop>> call, Response<List<Stop>> response) {
+
+                /*
+                    Reset previous entries' IS_CURRENT to 0
+
+                 */
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(BusContract.ArrivalEntry.IS_CURRENT, 0);
                 getContentResolver().update(BusContract.ArrivalEntry.CONTENT_URI, contentValues,

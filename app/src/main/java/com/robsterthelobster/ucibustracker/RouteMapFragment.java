@@ -43,12 +43,12 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MapFragment extends SupportMapFragment
+public class RouteMapFragment extends SupportMapFragment
         implements OnMapReadyCallback, LoaderManager.LoaderCallbacks<Cursor>,
         GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnMarkerClickListener{
 
-    private final String TAG = MapFragment.class.getSimpleName();
+    private final String TAG = RouteMapFragment.class.getSimpleName();
 
     private final int STOP_LOADER = 0;
     private final int VEHICLE_LOADER = 1;
@@ -108,8 +108,9 @@ public class MapFragment extends SupportMapFragment
     private HashMap<String, String> stopArrivalTimes;
     private HashMap<String, String> vehicleStats;
     private boolean noTimesAvailable = false;
+    private boolean shouldCenter = true;
 
-    public MapFragment() {
+    public RouteMapFragment() {
         getMapAsync(this);
     }
 
@@ -121,7 +122,7 @@ public class MapFragment extends SupportMapFragment
             routeID = arguments.getInt(Constants.ROUTE_ID_KEY) + "";
         }
         stopMarkers = new ArrayList<>();
-        vehicleMarkers = new ArrayList();
+        vehicleMarkers = new ArrayList<>();
         stopArrivalTimes = new HashMap<>();
         vehicleStats = new HashMap<>();
     }
@@ -215,7 +216,11 @@ public class MapFragment extends SupportMapFragment
                                     Color.parseColor(color)))
                             .position(latLng).title(stopName)));
                 }
-                centerMapToMarkers(200);
+                if(shouldCenter){
+                    shouldCenter = false;
+                    centerMapToMarkers(200);
+                }
+
                 //drawRoutePath(color);
                 break;
             case VEHICLE_LOADER:
@@ -227,10 +232,8 @@ public class MapFragment extends SupportMapFragment
 
                     double latitude = data.getDouble(C_BUS_LAT);
                     double longitude = data.getDouble(C_BUS_LONG);
-                    String busName = getString(R.string.map_bus_name) + " " +
-                            data.getString(C_BUS_NAME);
-                    String percentage = getString(R.string.map_percentage) + ": " +
-                            data.getInt(C_PERCENTAGE) + "%";
+                    String busName = getString(R.string.map_bus_name, data.getString(C_BUS_NAME));
+                    String percentage = getString(R.string.map_percentage, data.getInt(C_PERCENTAGE));
                     String direction = data.getString(C_DIRECTION);
 
                     LatLng latLng = new LatLng(latitude, longitude);
@@ -241,8 +244,7 @@ public class MapFragment extends SupportMapFragment
                             .position(latLng).rotation(Utility.getRotationFromDirection(direction))
                             .flat(true).title(busName)));
 
-                    direction = getString(R.string.map_direction) + ": " +
-                            Utility.getFullDirectionName(direction);
+                    direction = getString(R.string.map_direction, Utility.getFullDirectionName(direction));
                     vehicleStats.put(busName, percentage + "\n" + direction);
                 }
                 break;
@@ -254,11 +256,10 @@ public class MapFragment extends SupportMapFragment
                     while(data.moveToNext()){
                         String routeName = data.getString(C_ARRIVAL_STOP_NAME);
                         int minutes = data.getInt(C_ARRIVAL_MIN);
-                        int minutesAlt = data.getInt(C_ARRIVAL_MIN_ALT);
+                        String altArrivalTime = ""+data.getInt(C_ARRIVAL_MIN_ALT);
                         double seconds = data.getDouble(C_ARRIVAL_SECONDS);
 
                         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
-                        String altArrivalTime = Utility.getArrivalTime(minutesAlt);
                         String text = formatBusTime(data.getString(C_ARRIVAL_BUS_NAME), arrivalTime)
                                 + "\n" +
                                 formatBusTime(data.getString(C_ARRIVAL_BUS_NAME_ALT), altArrivalTime);
@@ -273,8 +274,11 @@ public class MapFragment extends SupportMapFragment
     }
 
     private String formatBusTime(String busName, String time){
-        return getString(R.string.map_bus_name) + " " + busName + " " +
-                getString(R.string.map_arrival_time_message) + " " + time;
+        String text = "";
+        if(busName != null && time != null){
+            text = getString(R.string.map_arrival_time_message, busName, time);
+        }
+        return text;
     }
 
     @Override
@@ -355,7 +359,7 @@ public class MapFragment extends SupportMapFragment
             @Override
             public Snackbar create() {
                 snackbar =
-                        Snackbar.make(snackbarLayout, str, Snackbar.LENGTH_INDEFINITE);
+                        Snackbar.make(snackbarLayout, str, Snackbar.LENGTH_LONG);
                 View snackView = snackbar.getView();
                 TextView textView =
                         (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);

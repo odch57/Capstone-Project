@@ -394,12 +394,10 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
     private void updateEmptyView(){
         if(mAdapter.getItemCount() == 0) {
-            int message = R.string.empty_default_message;
+            int message = R.string.empty_no_data_from_server;
             if (!Utility.isNetworkAvailable(getContext())) {
                 message = R.string.empty_no_connection_message;
-            } else if (mLocation == null && !hasRoute) {
-                message = R.string.empty_no_location_message;
-            } else if (mAdapter.getCursor() instanceof ArrivalsCursorWrapper) {
+            } else if (mAdapter.getCursor() instanceof ArrivalsCursorWrapper && mLocation != null) {
                 message = R.string.empty_no_nearby_message;
             }
             emptyView.setText(message);

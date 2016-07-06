@@ -6,7 +6,7 @@ import android.util.Log;
 
 /**
  * Used to make sure only the map page uses the route snackbar
- * Basically overrides onSetUserVisibleHint to hide snackbar unless otherwise noted(in MapFragment)
+ * Basically overrides onSetUserVisibleHint to hide snackbar unless otherwise noted(in RouteMapFragment)
  *
  * http://stackoverflow.com/questions/34465005/
  * android-multiple-snackbars-in-separate-fragments-viewpager/34750933

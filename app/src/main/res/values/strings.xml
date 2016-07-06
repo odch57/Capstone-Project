@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="http://schemas.android.com/tools">
     <string name="app_name">UCI Transit</string>
 
     <string name="title_activity_arrivals">Nearby Arrivals</string>
@@ -19,11 +19,16 @@
     <string name="empty_no_connection_message">The network is not available to fetch arrival data.</string>
     <string name="empty_no_nearby_message">There are no nearby stops. Please view the navigation drawer for specific routes.</string>
     <string name="empty_no_location_message">Location is not available. Please allow location for nearby arrivals.</string>
+    <string name="empty_no_data_from_server">Arrival predictions are not available at this time. No data is transmitted from the server.</string>
 
     <string name="snackbar_dismiss">Dismiss</string>
-    <string name="map_arrival_time_message">coming in</string>
-    <string name="map_direction">Direction</string>
-    <string name="map_percentage">Percentage full</string>
-    <string name="map_bus_name">Bus</string>
+    <string name="map_arrival_time_message">Bus <xliff:g id="bus">%1$s</xliff:g> coming in <xliff:g id="time">%2$s</xliff:g> minutes</string>
+    <string name="map_direction">Heading <xliff:g id="direction">%1$s</xliff:g></string>
+    <string name="map_percentage">Bus is <xliff:g id="percent">%1$s</xliff:g>%% full</string>
+    <string name="map_bus_name">Bus <xliff:g id="bus">%1$s</xliff:g></string>
+
+    <!-- x min where min is shorthand for minute.  Example: 1 min -->
+    <string name="arrival_time"><xliff:g id="bus">%1$s</xliff:g> min</string>
+    <string name="no_arrival_time">Not available yet</string>
 
 </resources>
