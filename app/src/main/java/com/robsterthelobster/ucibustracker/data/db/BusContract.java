@@ -81,6 +81,9 @@ public class BusContract {
         public static final String MINUTES = "minutes";
         public static final String MIN_ALT = "minutes_alt";
         public static final String MIN_ALT_2 = "minutes_alt_2";
+        public static final String BUS_NAME = "bus_name";
+        public static final String BUS_NAME_ALT = "bus_name_alt";
+        public static final String BUS_NAME_ALT_2 = "bus_name_alt_2";
         public static final String SECONDS_TO_ARRIVAL = "seconds_to_arrival";
         public static final String IS_CURRENT = "is_current";
 

@@ -7,6 +7,8 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by robin on 6/28/2016.
  */
@@ -81,5 +83,55 @@ public class Utility {
         double d = EARTH_RADIUS * c;
 
         return d;
+    }
+
+    /*
+        Direction comes in shorthand N,E,S,W and combination
+        The icon used is already facing right so E = 0
+     */
+    public static float getRotationFromDirection(String direction){
+        switch (direction){
+            case "N":
+                return 270f;
+            case "NW":
+                return 225f;
+            case "NE":
+                return 315f;
+            case "E":
+                return 0f;
+            case "S":
+                return 90f;
+            case "SE":
+                return 45f;
+            case "SW":
+                return 135f;
+            case "W":
+                return 180f;
+            default:
+                return 0f;
+        }
+    }
+
+    public static String getFullDirectionName(String direction){
+        switch (direction){
+            case "N":
+                return "north";
+            case "NW":
+                return "northwest";
+            case "NE":
+                return "northeast";
+            case "E":
+                return "east";
+            case "S":
+                return "south";
+            case "SE":
+                return "southeast";
+            case "SW":
+                return "southwest";
+            case "W":
+                return "west";
+            default:
+                return direction;
+        }
     }
 }

@@ -83,15 +83,19 @@ public class MapFragment extends SupportMapFragment
     public final int C_DIRECTION = 5;
 
     private final String[] ARRIVAL_COLUMNS = {
-            BusContract.ArrivalEntry.TABLE_NAME + "." + BusContract.ArrivalEntry.ROUTE_NAME,
+            BusContract.StopEntry.TABLE_NAME + "." + BusContract.StopEntry.STOP_NAME,
             BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL,
             BusContract.ArrivalEntry.MINUTES,
             BusContract.ArrivalEntry.MIN_ALT,
+            BusContract.ArrivalEntry.BUS_NAME,
+            BusContract.ArrivalEntry.BUS_NAME_ALT
     };
-    public final int C_ARRIVAL_ROUTE_NAME = 0;
+    public final int C_ARRIVAL_STOP_NAME = 0;
     public final int C_ARRIVAL_SECONDS = 1;
     public final int C_ARRIVAL_MIN = 2;
     public final int C_ARRIVAL_MIN_ALT = 3;
+    public final int C_ARRIVAL_BUS_NAME = 4;
+    public final int C_ARRIVAL_BUS_NAME_ALT = 5;
 
     private GoogleMap mMap;
     private String routeID = "";
@@ -102,6 +106,7 @@ public class MapFragment extends SupportMapFragment
     private SnackbarManager snackbarManager;
     private CoordinatorLayout snackbarLayout;
     private HashMap<String, String> stopArrivalTimes;
+    private HashMap<String, String> vehicleStats;
     private boolean noTimesAvailable = false;
 
     public MapFragment() {
@@ -116,8 +121,9 @@ public class MapFragment extends SupportMapFragment
             routeID = arguments.getInt(Constants.ROUTE_ID_KEY) + "";
         }
         stopMarkers = new ArrayList<>();
-        vehicleMarkers = new ArrayList<>();
+        vehicleMarkers = new ArrayList();
         stopArrivalTimes = new HashMap<>();
+        vehicleStats = new HashMap<>();
     }
 
     @Override
@@ -193,6 +199,10 @@ public class MapFragment extends SupportMapFragment
         int id = loader.getId();
         switch(id){
             case STOP_LOADER:
+                for(Marker marker : stopMarkers){
+                    marker.remove();
+                }
+                stopMarkers.clear();
                 while(data.moveToNext() && mMap != null){
                     double latitude = data.getDouble(C_STOP_LAT);
                     double longitude = data.getDouble(C_STOP_LONG);
@@ -209,19 +219,31 @@ public class MapFragment extends SupportMapFragment
                 //drawRoutePath(color);
                 break;
             case VEHICLE_LOADER:
-                System.out.println("loader");
+                for(Marker marker : vehicleMarkers){
+                    marker.remove();
+                }
+                vehicleMarkers.clear();
                 while(data.moveToNext() && mMap != null){
+
                     double latitude = data.getDouble(C_BUS_LAT);
                     double longitude = data.getDouble(C_BUS_LONG);
-                    String busName = "Bus " + data.getString(C_BUS_NAME);
-                    String percentage = "Percent full: " + data.getInt(C_PERCENTAGE) + "%";
-                    String direction = "Heading " + data.getString(C_DIRECTION);
+                    String busName = getString(R.string.map_bus_name) + " " +
+                            data.getString(C_BUS_NAME);
+                    String percentage = getString(R.string.map_percentage) + ": " +
+                            data.getInt(C_PERCENTAGE) + "%";
+                    String direction = data.getString(C_DIRECTION);
 
                     LatLng latLng = new LatLng(latitude, longitude);
+
                     vehicleMarkers.add(mMap.addMarker(new MarkerOptions()
                             .icon(getBitmapDescriptor(R.drawable.bus_tracker,
                                     ContextCompat.getColor(getContext(), R.color.colorPrimary)))
-                            .position(latLng).title(busName).snippet(direction)));
+                            .position(latLng).rotation(Utility.getRotationFromDirection(direction))
+                            .flat(true).title(busName)));
+
+                    direction = getString(R.string.map_direction) + ": " +
+                            Utility.getFullDirectionName(direction);
+                    vehicleStats.put(busName, percentage + "\n" + direction);
                 }
                 break;
             case ARRIVAL_LOADER:
@@ -230,14 +252,16 @@ public class MapFragment extends SupportMapFragment
                 }
                 else{
                     while(data.moveToNext()){
-                        String routeName = data.getString(C_ARRIVAL_ROUTE_NAME);
+                        String routeName = data.getString(C_ARRIVAL_STOP_NAME);
                         int minutes = data.getInt(C_ARRIVAL_MIN);
                         int minutesAlt = data.getInt(C_ARRIVAL_MIN_ALT);
                         double seconds = data.getDouble(C_ARRIVAL_SECONDS);
 
                         String arrivalTime = Utility.getArrivalTime(minutes, seconds);
                         String altArrivalTime = Utility.getArrivalTime(minutesAlt);
-                        String text = arrivalTime + "\n" + altArrivalTime;
+                        String text = formatBusTime(data.getString(C_ARRIVAL_BUS_NAME), arrivalTime)
+                                + "\n" +
+                                formatBusTime(data.getString(C_ARRIVAL_BUS_NAME_ALT), altArrivalTime);
                         stopArrivalTimes.put(routeName, text);
                     }
                     noTimesAvailable = false;
@@ -248,10 +272,13 @@ public class MapFragment extends SupportMapFragment
         }
     }
 
-    @Override
-    public void onLoaderReset(Loader loader) {
-
+    private String formatBusTime(String busName, String time){
+        return getString(R.string.map_bus_name) + " " + busName + " " +
+                getString(R.string.map_arrival_time_message) + " " + time;
     }
+
+    @Override
+    public void onLoaderReset(Loader loader) {}
 
     // http://stackoverflow.com/questions/14828217/
     // android-map-v2-zoom-to-show-all-the-markers
@@ -333,7 +360,7 @@ public class MapFragment extends SupportMapFragment
                 TextView textView =
                         (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
                 textView.setTextColor(Color.WHITE);
-                snackbar.setAction("Dismiss", new View.OnClickListener() {
+                snackbar.setAction(getString(R.string.snackbar_dismiss), new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         snackbarManager = null;
@@ -347,10 +374,14 @@ public class MapFragment extends SupportMapFragment
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        if(noTimesAvailable){
-            showSnackbar(getString(R.string.empty_default_message));
-        }else if(stopArrivalTimes != null){
+        if (stopArrivalTimes != null && !noTimesAvailable && stopMarkers.contains(marker)){
             showSnackbar(stopArrivalTimes.get(marker.getTitle()));
+        }else{
+            showSnackbar(getString(R.string.empty_default_message));
+        }
+
+        if(vehicleMarkers != null && vehicleMarkers.contains(marker)){
+            showSnackbar(vehicleStats.get(marker.getTitle()));
         }
         return false;
     }

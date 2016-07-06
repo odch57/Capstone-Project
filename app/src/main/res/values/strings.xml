@@ -20,5 +20,10 @@
     <string name="empty_no_nearby_message">There are no nearby stops. Please view the navigation drawer for specific routes.</string>
     <string name="empty_no_location_message">Location is not available. Please allow location for nearby arrivals.</string>
 
+    <string name="snackbar_dismiss">Dismiss</string>
+    <string name="map_arrival_time_message">coming in</string>
+    <string name="map_direction">Direction</string>
+    <string name="map_percentage">Percentage full</string>
+    <string name="map_bus_name">Bus</string>
 
 </resources>

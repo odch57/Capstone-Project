@@ -59,7 +59,10 @@
         <service
             android:name=".data.UciBusIntentService"
             android:exported="false"></service>
-        <receiver android:name=".data.UciBusIntentService$AlarmReceiver" android:enabled="true"/>
+        <receiver android:name=".ArrivalsActivity$BusRouteBroadcastReceiver"
+            android:enabled="true"/>
+        <receiver android:name=".data.UciBusIntentService$AlarmReceiver"
+            android:enabled="true"/>
     </application>
 
 </manifest>

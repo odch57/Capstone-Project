@@ -5,9 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.robsterthelobster.ucibustracker.ArrivalsActivity;
+import com.robsterthelobster.ucibustracker.Constants;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 import com.robsterthelobster.ucibustracker.data.models.Arrivals;
 import com.robsterthelobster.ucibustracker.data.models.Prediction;
@@ -30,6 +32,15 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
  */
 public class UciBusIntentService extends IntentService {
+
+    public static class AlarmReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent sendIntent = new Intent(context, UciBusIntentService.class);
+            context.startService(sendIntent);
+        }
+    }
 
     private final String TAG = UciBusIntentService.class.getSimpleName();
 
@@ -55,10 +66,10 @@ public class UciBusIntentService extends IntentService {
         apiService =
                 retrofit.create(UciBusApiEndpointInterface.class);
 
-        fetchRoutesAndSubData();
+        fetchRoutesAndSubData(this);
     }
 
-    private void fetchRoutesAndSubData(){
+    private void fetchRoutesAndSubData(final Context context){
         Call<List<Route>> routeCall = apiService.getRoutes();
         routeCall.enqueue(new Callback<List<Route>>() {
             @Override
@@ -86,12 +97,17 @@ public class UciBusIntentService extends IntentService {
                         cVVector.toArray(cvArray);
                         getContentResolver().bulkInsert(BusContract.RouteEntry.CONTENT_URI, cvArray);
                     }
+                    /*
+                    Tell arrivals activity to start the drawer
+                    */
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(
+                            new Intent(Constants.BUS_ROUTE_ACTION));
                 }
             }
 
             @Override
             public void onFailure(Call<List<Route>> call, Throwable t) {
-                Log.d(TAG, t.getMessage().toString());
+                Log.d(TAG, "call failed");
             }
         });
     }
@@ -146,7 +162,7 @@ public class UciBusIntentService extends IntentService {
 
             @Override
             public void onFailure(Call<List<Stop>> call, Throwable t) {
-                Log.d(TAG, t.getMessage().toString());
+                Log.d(TAG, "call failed");
             }
         });
     }
@@ -178,16 +194,19 @@ public class UciBusIntentService extends IntentService {
                                 arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
                                 arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
                                 arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
+                                arrivalValues.put(BusContract.ArrivalEntry.BUS_NAME, prediction.getBusName());
                                 arrivalValues.put(BusContract.ArrivalEntry.SECONDS_TO_ARRIVAL, prediction.getSecondsToArrival());
                                 arrivalValues.put(BusContract.ArrivalEntry.IS_CURRENT, 1);
                                 break;
                             case 1:
                                 // get the second prediction
                                 arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT, prediction.getMinutes());
+                                arrivalValues.put(BusContract.ArrivalEntry.BUS_NAME_ALT, prediction.getBusName());
                                 break;
                             case 2:
                                 // get the third prediction
                                 arrivalValues.put(BusContract.ArrivalEntry.MIN_ALT_2, prediction.getMinutes());
+                                arrivalValues.put(BusContract.ArrivalEntry.BUS_NAME_ALT_2, prediction.getBusName());
                                 break;
                             default:
                                 // do nothing
@@ -202,7 +221,7 @@ public class UciBusIntentService extends IntentService {
 
             @Override
             public void onFailure(Call<Arrivals> call, Throwable t) {
-                Log.d(TAG, t.getMessage().toString());
+                Log.d(TAG, "call failed");
             }
         });
     }
@@ -239,18 +258,8 @@ public class UciBusIntentService extends IntentService {
 
             @Override
             public void onFailure(Call<List<Vehicle>> call, Throwable t) {
-                Log.d(TAG, t.getMessage().toString());
+                Log.d(TAG, "call failed");
             }
         });
     }
-
-    public static class AlarmReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Intent sendIntent = new Intent(context, UciBusIntentService.class);
-            context.startService(sendIntent);
-        }
-    }
-
 }

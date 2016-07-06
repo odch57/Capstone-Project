@@ -1,14 +1,17 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.app.LoaderManager;
-import android.content.ContentValues;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,19 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 
-import com.robsterthelobster.ucibustracker.data.UciBusApiEndpointInterface;
-import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
-import com.robsterthelobster.ucibustracker.data.models.Route;
-
-import java.util.List;
-import java.util.Vector;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ArrivalsActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor>,
@@ -48,6 +39,8 @@ public class ArrivalsActivity extends AppCompatActivity
     private static final int C_ROUTE_ID = 0;
     private static final int C_ROUTE_NAME = 1;
     private static final int C_COLOR = 2;
+
+    protected BusRouteBroadcastReceiver mBroadcastReceiver;
 
     NavigationView navigationView;
     DrawerLayout drawer;
@@ -76,11 +69,7 @@ public class ArrivalsActivity extends AppCompatActivity
             transaction.replace(R.id.main_container, fragment);
             transaction.commit();
         }
-
-        // called just in case there is already data, but no internet
-        // will get called again, in case routes have been changed
-        restartLoader();
-        fetchRoutes();
+        mBroadcastReceiver = new BusRouteBroadcastReceiver();
     }
 
     @Override
@@ -93,6 +82,14 @@ public class ArrivalsActivity extends AppCompatActivity
                 routesMenu.getItem(i).setChecked(false);
             }
         }
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver,
+                new IntentFilter(Constants.BUS_ROUTE_ACTION));
+    }
+
+    @Override
+    public void onPause(){
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        super.onPause();
     }
 
     @Override
@@ -105,15 +102,8 @@ public class ArrivalsActivity extends AppCompatActivity
         }
     }
 
-    public void restartLoader() {
-        Loader loader = getLoaderManager().getLoader(ROUTE_LOADER);
-
-        if(loader != null){
-            getLoaderManager().restartLoader(ROUTE_LOADER, null, this);
-        }else{
-            getLoaderManager().initLoader(ROUTE_LOADER, null, this);
-        }
-
+    public void startLoader() {
+        getLoaderManager().restartLoader(ROUTE_LOADER, null, this);
     }
 
     @Override
@@ -170,52 +160,12 @@ public class ArrivalsActivity extends AppCompatActivity
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {}
 
-    /*
-        This is separate as the nav bar needs this right away
-        to initiate the loader
-     */
-    private void fetchRoutes(){
-        String BASE_URL = "http://www.ucishuttles.com/";
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+    public class BusRouteBroadcastReceiver extends BroadcastReceiver{
 
-        UciBusApiEndpointInterface apiService =
-                retrofit.create(UciBusApiEndpointInterface.class);
-
-        Call<List<Route>> routeCall = apiService.getRoutes();
-        routeCall.enqueue(new Callback<List<Route>>() {
-            @Override
-            public void onResponse(Call<List<Route>> call, Response<List<Route>> response) {
-                List<Route> routes = response.body();
-                if(routes != null){
-                    Vector<ContentValues> cVVector = new Vector<>(routes.size());
-                    for(Route route : routes){
-                        //Log.d(TAG, "route name: " + route.getName());
-                        ContentValues routeValues = new ContentValues();
-
-                        int routeID = route.getId();
-
-                        routeValues.put(BusContract.RouteEntry.ROUTE_ID, routeID);
-                        routeValues.put(BusContract.RouteEntry.ROUTE_NAME, route.getName());
-                        routeValues.put(BusContract.RouteEntry.COLOR, route.getColor());
-
-                        cVVector.add(routeValues);
-                    }
-                    if ( cVVector.size() > 0 ) {
-                        ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                        cVVector.toArray(cvArray);
-                        getContentResolver().bulkInsert(BusContract.RouteEntry.CONTENT_URI, cvArray);
-                    }
-                }
-                restartLoader();
-            }
-
-            @Override
-            public void onFailure(Call<List<Route>> call, Throwable t) {
-                Log.d(TAG, t.getMessage().toString());
-            }
-        });
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("RECEIVER", "received");
+            startLoader();
+        }
     }
 }

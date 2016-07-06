@@ -238,6 +238,7 @@ public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<Arrival
     @Override
     public Cursor swapCursor(Cursor cursor){
         checks = new boolean[cursor.getCount()];
+        checkOverride = false;
         return super.swapCursor(cursor);
     }
 }

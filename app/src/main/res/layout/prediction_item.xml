@@ -18,14 +18,14 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Headline"
         android:textColor="@color/white"
         app:layout_columnSpan="3"
-        android:padding="16dp" />
+        android:padding="@dimen/activity_horizontal_margin" />
 
     <TextView
         android:id="@+id/prediction_arrival_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="10 min"
-        android:paddingRight="16dp"
+        android:paddingRight="@dimen/activity_horizontal_margin"
         app:layout_columnSpan="2"
         app:layout_gravity="center|right"
         android:textAppearance="@style/TextAppearance.AppCompat.Headline"
@@ -38,15 +38,15 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Small.Inverse"
         android:text="University Center - North (UCI Admin)"
         app:layout_columnSpan="3"
-        android:paddingLeft="16dp"
-        android:paddingBottom="16dp"/>
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_horizontal_margin"/>
 
     <CheckBox
         android:id="@+id/prediction_favorite_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_column="4"
-        android:paddingRight="16dp"
+        android:paddingRight="@dimen/activity_horizontal_margin"
         android:button="@drawable/favorites_selector" />
 
 </android.support.v7.widget.GridLayout>
