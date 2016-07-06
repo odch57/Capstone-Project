@@ -1,5 +1,6 @@
 package com.robsterthelobster.ucibustracker;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;

@@ -376,8 +376,7 @@ public class RouteMapFragment extends SupportMapFragment
         snackbarManager = new SnackbarManager(new SnackbarManager.Create() {
             @Override
             public Snackbar create() {
-                snackbar =
-                        Snackbar.make(snackbarLayout, str, Snackbar.LENGTH_LONG);
+                snackbar = Snackbar.make(snackbarLayout, str, Snackbar.LENGTH_LONG);
                 View snackView = snackbar.getView();
                 TextView textView =
                         (TextView) snackView.findViewById(android.support.design.R.id.snackbar_text);
