@@ -12,4 +12,6 @@
     <color name="favorite_checked">@color/colorAccent</color>
     <color name="favorite_unchecked">@color/white</color>
 
+    <color name="map_transparent_white">#DDFFFFFF</color>
+
 </resources>

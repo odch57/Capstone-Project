@@ -30,5 +30,6 @@
     <!-- x min where min is shorthand for minute.  Example: 1 min -->
     <string name="arrival_time"><xliff:g id="bus">%1$s</xliff:g> min</string>
     <string name="no_arrival_time">Not available yet</string>
+    <string name="button_center_string">Center</string>
 
 </resources>
