@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.robsterthelobster.ucibustracker.ArrivalsActivity;
 import com.robsterthelobster.ucibustracker.Constants;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 import com.robsterthelobster.ucibustracker.data.models.Arrivals;
@@ -55,6 +54,7 @@ public class UciBusIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "fetching data");
         fetchData();
+        updateWidgets();
     }
 
     private void fetchData() {
@@ -266,5 +266,12 @@ public class UciBusIntentService extends IntentService {
                 Log.d(TAG, "call failed");
             }
         });
+    }
+
+    private void updateWidgets() {
+        // Setting the package ensures that only components in our app will receive the broadcast
+        Intent dataUpdatedIntent = new Intent(Constants.ACTION_DATA_UPDATED)
+                .setPackage(this.getPackageName());
+        this.sendBroadcast(dataUpdatedIntent);
     }
 }

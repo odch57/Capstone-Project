@@ -182,22 +182,23 @@ public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<Arrival
         int minutes = cursor.getInt(ArrivalsFragment.C_MINUTES);
         int minutesAlt = cursor.getInt(ArrivalsFragment.C_MIN_ALT);
         double seconds = cursor.getDouble(ArrivalsFragment.C_SECONDS);
-        int isFavorited = cursor.getInt(ArrivalsFragment.C_FAVORITE);
+        int isFavorite = cursor.getInt(ArrivalsFragment.C_FAVORITE);
         
         final String routeName = cursor.getString(ArrivalsFragment.C_ROUTE_NAME);
         String stopName = cursor.getString(ArrivalsFragment.C_STOP_NAME);
         String color = cursor.getString(ArrivalsFragment.C_COLOR);
-        String arrivalTime = Utility.getArrivalTime(minutes, seconds);
-        String altArrivalTime = (minutesAlt == 0) ?
+        String arrivalTime = mContext.getString(R.string.arrival_time,
+                Utility.getArrivalTime(minutes, seconds));
+        String altArrivalTime = (minutesAlt != 0) ?
                 mContext.getString(R.string.arrival_time, minutesAlt+"") :
                 mContext.getString(R.string.no_arrival_time);
-       ;
+
         final int position = cursor.getPosition();
 
         final CheckBox checkBox = viewHolder.getButtonView();
         checkBox.setOnCheckedChangeListener(null);
 
-        if(isFavorited == 1 && !checkOverride){
+        if(isFavorite == 1 && !checkOverride){
             checks[position] = true;
         }
         checkBox.setChecked(checks[position]);
@@ -232,7 +233,7 @@ public class ArrivalsPredictionAdapter extends CursorRecyclerViewAdapter<Arrival
 
         viewHolder.setBackground(color);
         viewHolder.getRouteView().setText(routeName);
-        viewHolder.getTimeView().setText(mContext.getString(R.string.arrival_time, arrivalTime));
+        viewHolder.getTimeView().setText(arrivalTime);
         viewHolder.getTimeViewAlt().setText(altArrivalTime);
         viewHolder.getStopView().setText(stopName);
     }

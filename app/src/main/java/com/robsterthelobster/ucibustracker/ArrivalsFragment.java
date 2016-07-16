@@ -21,6 +21,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
@@ -61,10 +62,7 @@ import java.util.Calendar;
 import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 
-public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private final String TAG = ArrivalsFragment.class.getSimpleName();
 
@@ -110,10 +108,6 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     //Handler mHandler = new Handler();
     Activity mActivity;
 
-    private GoogleApiClient mGoogleApiClient;
-    protected LocationRequest mLocationRequest;
-    private Location mLocation;
-
     private String routeName;
     private boolean hasRoute = false;
 
@@ -126,30 +120,10 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             routeName = arguments.getString(Constants.ROUTE_NAME_KEY);
             hasRoute = true;
         }
+        if(hasRoute)
+            updateRouteData();
 
-        mGoogleApiClient = new GoogleApiClient.Builder(getContext())
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-
-        updateRouteData();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
+        startLoaders();
     }
 
     @SuppressWarnings("deprecation")
@@ -191,28 +165,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         setHasOptionsMenu(true);
 
         updateRouteDataImmediately();
-        // just update for the default fragment
-//        if(!hasRoute) {
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    while (true) {
-//                        try {
-//                            Thread.sleep(20 * 1000); // 20s
-//                            mHandler.post(new Runnable() {
-//
-//                                @Override
-//                                public void run() {
-//                                    updateRouteDataImmediately();
-//                                }
-//                            });
-//                        } catch (Exception e) {
-//                            Log.d(TAG, e.getMessage());
-//                        }
-//                    }
-//                }
-//            }).start();
-//        }
+
         return rootView;
     }
 
@@ -247,9 +200,9 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
 
         String sortOrder;
         String location = "";
-        if(mLocation != null){
-            double latitude = mLocation.getLatitude();
-            double longitude = mLocation.getLongitude();
+        if(Utility.isLocationLatLonAvailable(getContext())){
+            double latitude = Utility.getLocationLatitude(getContext());
+            double longitude = Utility.getLocationLongitude(getContext());
 
             double fudge = Math.pow(Math.cos(Math.toRadians(latitude)),2);
 
@@ -292,7 +245,9 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         switch(id){
             // Only the arrival_loader needs to have the cursor filtered
             case ARRIVAL_LOADER:
-                cursor = new ArrivalsCursorWrapper(cursor, mLocation,
+                cursor = new ArrivalsCursorWrapper(cursor,
+                        Utility.getLocationLatitude(getContext()),
+                        Utility.getLocationLongitude(getContext()),
                         getContext().getResources().getInteger(R.integer.nearby_distance));
             case STOP_ARRIVAL_LOADER:
                 mAdapter.swapCursor(cursor);
@@ -310,53 +265,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoaderReset(Loader loader) {}
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        Log.d(TAG, "onConnected");
-
-        mLocationRequest = LocationRequest.create();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(5000);
-
-        if (ActivityCompat.checkSelfPermission(getContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(),
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    Constants.LOCATION_PERMISSION_REQUEST_CODE);
-        }else {
-            mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            LocationServices.FusedLocationApi.requestLocationUpdates(
-                    mGoogleApiClient, mLocationRequest, this);
-        }
-        startLoaders();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d(TAG, "onConnectionSuspended");
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d(TAG, "onConnectionFailed");
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(TAG, location.toString());
-        mLocation = location;
-
-        // if location changed, force update
-        updateRouteDataImmediately();
-    }
-
     private void updateRouteDataImmediately() {
-        Intent intent = new Intent(mActivity, UciBusIntentService.class);
+        Intent intent = new Intent(getActivity(), UciBusIntentService.class);
         getActivity().startService(intent);
     }
 
@@ -372,7 +282,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         calendar.add(Calendar.SECOND, 0);
         long frequency = 60 * 1000; // one minute, which is the minimum
 
-        am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pi);
+        am.setRepeating(AlarmManager.RTC, calendar.getTimeInMillis(), frequency, pi);
     }
 
     private void startLoaders(){
@@ -397,7 +307,8 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
             int message = R.string.empty_no_data_from_server;
             if (!Utility.isNetworkAvailable(getContext())) {
                 message = R.string.empty_no_connection_message;
-            } else if (mAdapter.getCursor() instanceof ArrivalsCursorWrapper && mLocation != null) {
+            } else if (mAdapter.getCursor() instanceof ArrivalsCursorWrapper
+                    && Utility.isLocationLatLonAvailable(getContext())) {
                 message = R.string.empty_no_nearby_message;
             }
             emptyView.setText(message);

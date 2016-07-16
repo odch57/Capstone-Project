@@ -12,4 +12,5 @@ public class Constants {
     public static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     public static final String BUS_ROUTE_ACTION = "com.robsterthelobster.ucibustracker.bus";
+    public static final String ACTION_DATA_UPDATED = "com.robsterthelobster.ucibustracker.ACTION_DATA_UPDATED";
 }

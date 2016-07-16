@@ -58,9 +58,26 @@
 
         <service
             android:name=".data.UciBusIntentService"
-            android:exported="false"></service>
-        <receiver android:name=".data.UciBusIntentService$AlarmReceiver"
-            android:enabled="true"/>
+            android:exported="false" />
+
+        <receiver
+            android:name=".data.UciBusIntentService$AlarmReceiver"
+            android:enabled="true" />
+        <receiver android:name=".widget.ArrivalsWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.robsterthelobster.ucibustracker.ACTION_DATA_UPDATED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/arrivals_widget_info" />
+        </receiver>
+        <service
+            android:name=".widget.ArrivalsRemoteViews"
+            android:exported="false"
+            android:enabled="true"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 
 </manifest>

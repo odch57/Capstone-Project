@@ -22,7 +22,7 @@ public class ArrivalsCursorWrapper extends CursorWrapper{
     private int count=0;
     private int pos=0;
 
-    public ArrivalsCursorWrapper(Cursor cursor, Location location, int radius) {
+    public ArrivalsCursorWrapper(Cursor cursor, double latitude, double longitude, int radius) {
         super(cursor);
         this.count = super.getCount();
         this.index = new int[this.count];
@@ -33,8 +33,8 @@ public class ArrivalsCursorWrapper extends CursorWrapper{
         for (int i=0;i<this.count;i++) {
             super.moveToPosition(i);
 
-            double distance = Utility.getDistanceBetweenTwoPoints(
-                    location, getDouble(latColumn), getDouble(longColumn));
+            double distance = Utility.getDistanceBetweenTwoPoints(latitude, longitude,
+                    getDouble(latColumn), getDouble(longColumn));
             //Log.d("distance", " " +distance);
 
             if (distance <= radius)

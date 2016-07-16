@@ -1,6 +1,5 @@
 package com.robsterthelobster.ucibustracker;
 
-import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,9 +7,16 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
@@ -23,11 +29,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
 public class ArrivalsActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor>,
-        NavigationView.OnNavigationItemSelectedListener{
+        NavigationView.OnNavigationItemSelectedListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
 
     private final String TAG = ArrivalsActivity.class.getSimpleName();
 
@@ -47,6 +62,10 @@ public class ArrivalsActivity extends AppCompatActivity
     DrawerLayout drawer;
     SubMenu routesMenu;
 
+    private GoogleApiClient mGoogleApiClient;
+    protected LocationRequest mLocationRequest;
+    private Location mLocation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +83,12 @@ public class ArrivalsActivity extends AppCompatActivity
 
         navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
         if (savedInstanceState == null) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             ArrivalsFragment fragment = new ArrivalsFragment();
@@ -71,6 +96,22 @@ public class ArrivalsActivity extends AppCompatActivity
             transaction.commit();
         }
         mBroadcastReceiver = new BusRouteBroadcastReceiver();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
     }
 
     @Override
@@ -160,6 +201,70 @@ public class ArrivalsActivity extends AppCompatActivity
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {}
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected");
+
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(5000);
+
+        if (ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    Constants.LOCATION_PERMISSION_REQUEST_CODE);
+        }else {
+            mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+            if(mLocation != null) {
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putFloat(getString(R.string.pref_location_latitude), (float) mLocation.getLatitude());
+                editor.putFloat(getString(R.string.pref_location_longitude), (float) mLocation.getLongitude());
+                editor.apply();
+            }
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(TAG, "onConnectionSuspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed");
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG, location.toString());
+        mLocation = location;
+        if(mLocation != null) {
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putFloat(getString(R.string.pref_location_latitude), (float) mLocation.getLatitude());
+            editor.putFloat(getString(R.string.pref_location_longitude), (float) mLocation.getLongitude());
+            editor.apply();
+        }
+
+        // if location changed, force update
+        updateRouteDataImmediately();
+    }
+
+    private void updateRouteDataImmediately() {
+        Intent intent = new Intent(this, UciBusIntentService.class);
+        startService(intent);
+    }
 
     public class BusRouteBroadcastReceiver extends BroadcastReceiver{
 

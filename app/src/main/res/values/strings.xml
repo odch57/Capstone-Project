@@ -28,8 +28,13 @@
     <string name="map_bus_name">Bus <xliff:g id="bus">%1$s</xliff:g></string>
 
     <!-- x min where min is shorthand for minute.  Example: 1 min -->
-    <string name="arrival_time"><xliff:g id="bus">%1$s</xliff:g> min</string>
+    <string name="arrival_time"><xliff:g id="time">%1$s</xliff:g> min</string>
     <string name="no_arrival_time">Not available yet</string>
     <string name="button_center_string">Center</string>
+    <string name="widget_empty">No data available.</string>
+
+    <!-- Key name for storing location latlong in SharedPreferences -->
+    <string name="pref_location_latitude" translatable="false">loc-latitude</string>
+    <string name="pref_location_longitude" translatable="false">loc-longitude</string>
 
 </resources>

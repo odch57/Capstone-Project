@@ -1,11 +1,13 @@
 package com.robsterthelobster.ucibustracker;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -13,6 +15,30 @@ import com.google.android.gms.maps.model.LatLng;
  * Created by robin on 6/28/2016.
  */
 public class Utility {
+
+    public static float DEFAULT_LATLONG = 0F;
+
+    public static boolean isLocationLatLonAvailable(Context context) {
+        SharedPreferences prefs
+                = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.contains(context.getString(R.string.pref_location_latitude))
+                && prefs.contains(context.getString(R.string.pref_location_longitude));
+    }
+
+    public static float getLocationLatitude(Context context) {
+        SharedPreferences prefs
+                = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getFloat(context.getString(R.string.pref_location_latitude),
+                DEFAULT_LATLONG);
+    }
+
+    public static float getLocationLongitude(Context context) {
+        SharedPreferences prefs
+                = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getFloat(context.getString(R.string.pref_location_longitude),
+                DEFAULT_LATLONG);
+    }
+
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager cm =
                 (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -57,18 +83,15 @@ public class Utility {
         http://stackoverflow.com/questions/3695224/
         sqlite-getting-nearest-locations-with-latitude-and-longitude
      */
-    public static double getDistanceBetweenTwoPoints(Location location, double latitude, double longitude) {
-        if(location == null){
-            return 0;
-        }
+    public static double getDistanceBetweenTwoPoints(double locationLatitude,
+                                                     double locationLongitude,
+                                                     double latitude, double longitude) {
         double EARTH_RADIUS = 6371000; // meters
-        double l_lat = location.getLatitude();
-        double l_long = location.getLongitude();
 
-        double dLat = Math.toRadians(l_lat - latitude);
-        double dLon = Math.toRadians(l_long - longitude);
+        double dLat = Math.toRadians(locationLatitude - latitude);
+        double dLon = Math.toRadians(locationLongitude - longitude);
         double lat1 = Math.toRadians(latitude);
-        double lat2 = Math.toRadians(l_lat);
+        double lat2 = Math.toRadians(locationLatitude);
 
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2)
                 * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
@@ -127,4 +150,5 @@ public class Utility {
                 return direction;
         }
     }
+
 }
