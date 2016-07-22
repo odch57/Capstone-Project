@@ -31,4 +31,6 @@ Depending on the school, the only thing that has to be replaced would be the roo
 
 * RecyclerView Animators - https://github.com/wasabeef/recyclerview-animators
 
+##License:
 
+UCI Transit is released under the <a href="https://github.com/tripleducke/Capstone-Project/blob/master/LICENSE">MIT License</a>.
