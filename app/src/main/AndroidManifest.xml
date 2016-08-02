@@ -48,9 +48,9 @@
 
         <provider
             android:name=".data.db.BusContentProvider"
-            android:authorities="com.robsterthelobster.ucibustracker"
+            android:authorities="com.robsterthelobster.bustracker"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="true" />
 
         <meta-data
             android:name="com.google.android.gms.version"
