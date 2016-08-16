@@ -21,15 +21,8 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -44,23 +37,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.robsterthelobster.ucibustracker.data.ArrivalsCursorWrapper;
 import com.robsterthelobster.ucibustracker.data.ArrivalsPredictionAdapter;
 import com.robsterthelobster.ucibustracker.data.UciBusIntentService;
 import com.robsterthelobster.ucibustracker.data.db.BusContract;
 
 import java.util.Calendar;
-
-import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
-import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 
 public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
@@ -160,8 +144,7 @@ public class ArrivalsFragment extends Fragment implements LoaderManager.LoaderCa
         );
 
         mAdapter = new ArrivalsPredictionAdapter(getContext(), null);
-        mRecyclerView.setAdapter(new AlphaInAnimationAdapter(mAdapter));
-        mRecyclerView.setItemAnimator(new SlideInUpAnimator(new OvershootInterpolator(1f)));
+        mRecyclerView.setAdapter(mAdapter);
         setHasOptionsMenu(true);
 
         updateRouteDataImmediately();
