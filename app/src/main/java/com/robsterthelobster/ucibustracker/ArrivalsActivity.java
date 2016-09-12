@@ -96,6 +96,8 @@ public class ArrivalsActivity extends AppCompatActivity
             transaction.commit();
         }
         mBroadcastReceiver = new BusRouteBroadcastReceiver();
+
+        updateRouteDataImmediately();
     }
 
     @Override

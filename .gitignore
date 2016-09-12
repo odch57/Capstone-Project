@@ -56,3 +56,4 @@ app/src/release/res/values/google_maps_api.xml
 *.apk
 app/app-release.apk
 *.apk
+app/app-release.apk

@@ -137,7 +137,7 @@ public class UciBusIntentService extends IntentService {
                         ContentValues favoriteValues = new ContentValues();
                         int stopID = stop.getId();
                         stopValues.put(BusContract.StopEntry.ROUTE_ID, routeID);
-                        stopValues.put(BusContract.StopEntry.STOP_ID, stopID);
+                        stopValues.put(BusContract.StopEntry.STOP_ID, routeID+stopID);
                         stopValues.put(BusContract.StopEntry.STOP_NAME, stop.getName());
                         stopValues.put(BusContract.StopEntry.LONGITUDE, stop.getLongitude());
                         stopValues.put(BusContract.StopEntry.LATITUDE, stop.getLatitude());
@@ -145,7 +145,7 @@ public class UciBusIntentService extends IntentService {
                         favoriteValues.put(BusContract.FavoriteEntry.FAV_KEY,
                                 routeID + "-" + stopID);
                         favoriteValues.put(BusContract.FavoriteEntry.ROUTE_ID, routeID);
-                        favoriteValues.put(BusContract.FavoriteEntry.STOP_ID, stopID);
+                        favoriteValues.put(BusContract.FavoriteEntry.STOP_ID, routeID+stopID);
                         favoriteValues.put(BusContract.FavoriteEntry.FAVORITE, 0);
 
                         stopVector.add(stopValues);
@@ -196,7 +196,7 @@ public class UciBusIntentService extends IntentService {
                                 // primary + main prediction
                                 arrivalValues.put(BusContract.ArrivalEntry.ROUTE_ID, prediction.getRouteId());
                                 arrivalValues.put(BusContract.ArrivalEntry.ROUTE_NAME, prediction.getRouteName());
-                                arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getStopId());
+                                arrivalValues.put(BusContract.ArrivalEntry.STOP_ID, prediction.getRouteId()+prediction.getStopId());
                                 arrivalValues.put(BusContract.ArrivalEntry.PREDICTION_TIME, predictionTime);
                                 arrivalValues.put(BusContract.ArrivalEntry.MINUTES, prediction.getMinutes());
                                 arrivalValues.put(BusContract.ArrivalEntry.BUS_NAME, prediction.getBusName());
