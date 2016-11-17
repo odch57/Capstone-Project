@@ -1,3 +1,7 @@
+# NOTE
+
+Rewrote the app; code repo here: https://github.com/tripleducke/UCITransit
+
 # UCI Transit
 
 An Android transit app for UC Irvine and Anteater Express.  Users can quickly view nearby stops for arrival times, or click into an individual route for additional info on stops.  Each route also has a dedicated route map, with updated bus and stop markers.
